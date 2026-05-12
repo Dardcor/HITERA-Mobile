@@ -44,6 +44,7 @@ class TugasProvider extends ChangeNotifier {
     required String judul,
     String? deskripsi,
     required String prioritas,
+    String? deadline,
   }) async {
     final user = SupabaseService.currentUser;
     if (user == null) return 'User tidak ditemukan';
@@ -55,6 +56,7 @@ class TugasProvider extends ChangeNotifier {
         'prioritas': prioritas,
         'status': 'aktif',
         'tanggal_target': _tanggal,
+        'deadline': deadline,
       });
       await fetch();
       return null;

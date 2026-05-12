@@ -48,21 +48,9 @@ class _SplashScreenState extends State<SplashScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Colors.white, HiteraColors.accentBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ).createShader(bounds),
-                  child: const Text(
-                    'HITERA',
-                    style: TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 8,
-                      color: Colors.white,
-                    ),
-                  ),
+                Image.asset(
+                  'image/logo.png',
+                  height: 120,
                 ),
                 const SizedBox(height: 40),
                 SizedBox(

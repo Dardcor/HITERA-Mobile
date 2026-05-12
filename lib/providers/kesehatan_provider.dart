@@ -35,11 +35,8 @@ class KesehatanProvider extends ChangeNotifier {
   }
 
   Future<String?> simpan({
-    required double? beratBadan,
     required int? airMinum,
     required double? jamTidur,
-    required int? langkahKaki,
-    required String? tekananDarah,
     required String? catatan,
   }) async {
     final user = SupabaseService.currentUser;
@@ -48,11 +45,8 @@ class KesehatanProvider extends ChangeNotifier {
       await SupabaseService.simpanKesehatan({
         'user_id': user.id,
         'tanggal': _tanggal,
-        'berat_badan': beratBadan,
         'air_minum': airMinum,
         'jam_tidur': jamTidur,
-        'langkah_kaki': langkahKaki,
-        'tekanan_darah': tekananDarah,
         'catatan': catatan,
       });
       await fetch();

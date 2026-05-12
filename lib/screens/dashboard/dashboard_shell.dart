@@ -4,7 +4,7 @@ import 'home_screen.dart';
 import '../keuangan/keuangan_screen.dart';
 import '../kesehatan/kesehatan_screen.dart';
 import '../tugas/tugas_screen.dart';
-import '../keseharian/keseharian_screen.dart';
+import '../pengaturan/pengaturan_screen.dart';
 
 class DashboardShell extends StatefulWidget {
   const DashboardShell({super.key});
@@ -21,7 +21,7 @@ class _DashboardShellState extends State<DashboardShell> {
     KeuanganScreen(),
     KesehatanScreen(),
     TugasScreen(),
-    KeseharianScreen(),
+    PengaturanScreen(),
   ];
 
   @override
@@ -44,7 +44,7 @@ class _DashboardShellState extends State<DashboardShell> {
             BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_rounded), label: 'FINANCE'),
             BottomNavigationBarItem(icon: Icon(Icons.favorite_rounded), label: 'HEALTH'),
             BottomNavigationBarItem(icon: Icon(Icons.check_box_rounded), label: 'TASKS'),
-            BottomNavigationBarItem(icon: Icon(Icons.book_rounded), label: 'JOURNAL'),
+            BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'SETTING'),
           ],
         ),
       ),

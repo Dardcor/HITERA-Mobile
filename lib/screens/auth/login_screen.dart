@@ -63,14 +63,9 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'HITERA',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: HiteraColors.accentBlue,
-                      letterSpacing: -1,
-                    ),
+                  Image.asset(
+                    'image/logo.png',
+                    height: 60,
                   ),
                   const SizedBox(height: 8),
                   const Text(

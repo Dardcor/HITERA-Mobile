@@ -27,6 +27,7 @@ class _TugasScreenState extends State<TugasScreen> {
     final judulCtrl = TextEditingController();
     final deskripsiCtrl = TextEditingController();
     String prioritas = 'sedang';
+    String? deadline;
     bool isSubmitting = false;
 
     showModalBottomSheet(
@@ -74,6 +75,57 @@ class _TugasScreenState extends State<TugasScreen> {
                   maxLines: 3,
                   style: const TextStyle(color: HiteraColors.textPrimary, fontSize: 14),
                   decoration: const InputDecoration(hintText: 'Tambahkan detail...'),
+                ),
+                const SizedBox(height: 16),
+                _label('Deadline (Opsional)'),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: deadline != null ? DateTime.parse(deadline!) : DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime(2030),
+                    );
+                    if (picked != null) {
+                      setModalState(() {
+                        deadline = picked.toIso8601String().split('T').first;
+                      });
+                    }
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: HiteraColors.bgSecondary,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: HiteraColors.border),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          deadline != null ? formatTanggalID(deadline!) : 'Pilih tanggal deadline',
+                          style: TextStyle(
+                            color: deadline != null ? HiteraColors.textPrimary : HiteraColors.textMuted,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (deadline != null)
+                              GestureDetector(
+                                onTap: () => setModalState(() => deadline = null),
+                                child: const Icon(Icons.close, color: HiteraColors.textMuted, size: 18),
+                              ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.calendar_today, color: HiteraColors.textMuted, size: 16),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _label('Prioritas'),
@@ -161,6 +213,7 @@ class _TugasScreenState extends State<TugasScreen> {
                           judul: judulCtrl.text.trim(),
                           deskripsi: deskripsiCtrl.text.isNotEmpty ? deskripsiCtrl.text : null,
                           prioritas: prioritas,
+                          deadline: deadline,
                         );
                         if (ctx.mounted) {
                           setModalState(() => isSubmitting = false);

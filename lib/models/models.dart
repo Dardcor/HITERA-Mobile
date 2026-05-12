@@ -48,11 +48,8 @@ class DataKesehatan {
   final String id;
   final String userId;
   final String tanggal;
-  final double? beratBadan;
   final int? airMinum;
   final double? jamTidur;
-  final int? langkahKaki;
-  final String? tekananDarah;
   final String? catatan;
   final String createdAt;
 
@@ -60,11 +57,8 @@ class DataKesehatan {
     required this.id,
     required this.userId,
     required this.tanggal,
-    this.beratBadan,
     this.airMinum,
     this.jamTidur,
-    this.langkahKaki,
-    this.tekananDarah,
     this.catatan,
     required this.createdAt,
   });
@@ -74,11 +68,8 @@ class DataKesehatan {
       id: json['id'] as String,
       userId: json['user_id'] as String,
       tanggal: json['tanggal'] as String,
-      beratBadan: (json['berat_badan'] as num?)?.toDouble(),
       airMinum: json['air_minum'] as int?,
       jamTidur: (json['jam_tidur'] as num?)?.toDouble(),
-      langkahKaki: json['langkah_kaki'] as int?,
-      tekananDarah: json['tekanan_darah'] as String?,
       catatan: json['catatan'] as String?,
       createdAt: json['created_at'] as String,
     );
@@ -93,6 +84,7 @@ class Tugas {
   final String prioritas; // 'rendah' | 'sedang' | 'tinggi'
   final String status; // 'aktif' | 'selesai' | 'ditunda'
   final String tanggalTarget;
+  final String? deadline;
   final String? tanggalSelesai;
   final String createdAt;
 
@@ -104,6 +96,7 @@ class Tugas {
     required this.prioritas,
     required this.status,
     required this.tanggalTarget,
+    this.deadline,
     this.tanggalSelesai,
     required this.createdAt,
   });
@@ -117,6 +110,7 @@ class Tugas {
       prioritas: json['prioritas'] as String,
       status: json['status'] as String,
       tanggalTarget: json['tanggal_target'] as String,
+      deadline: json['deadline'] as String?,
       tanggalSelesai: json['tanggal_selesai'] as String?,
       createdAt: json['created_at'] as String,
     );
@@ -130,6 +124,7 @@ class Tugas {
       'prioritas': prioritas,
       'status': status,
       'tanggal_target': tanggalTarget,
+      'deadline': deadline,
     };
   }
 }

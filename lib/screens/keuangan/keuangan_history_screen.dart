@@ -17,10 +17,35 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
   String _fromDate = hariIni();
   String _toDate = hariIni();
   String _filterJenis = 'Semua';
+  String _preset = 'Minggu';
 
   @override
   void initState() {
     super.initState();
+    _applyPreset('Minggu');
+  }
+
+  void _applyPreset(String preset) {
+    final now = DateTime.now();
+    final today = now.toIso8601String().split('T').first;
+    String from;
+
+    switch (preset) {
+      case 'Minggu':
+        from = now.subtract(const Duration(days: 7)).toIso8601String().split('T').first;
+      case 'Bulan':
+        from = DateTime(now.year, now.month - 1, now.day).toIso8601String().split('T').first;
+      case 'Tahun':
+        from = DateTime(now.year - 1, now.month, now.day).toIso8601String().split('T').first;
+      default: // Semua
+        from = '2020-01-01';
+    }
+
+    setState(() {
+      _preset = preset;
+      _fromDate = from;
+      _toDate = today;
+    });
     _fetchHistory();
   }
 
@@ -38,7 +63,7 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
     } catch (_) {
       _transaksi = [];
     }
-    setState(() => _loading = false);
+    if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _pickDate(bool isFrom) async {
@@ -56,6 +81,7 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
         } else {
           _toDate = d;
         }
+        _preset = '';
       });
     }
   }
@@ -82,6 +108,35 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Preset filter chips
+          Row(
+            children: ['Semua', 'Minggu', 'Bulan', 'Tahun'].map((p) {
+              final isSelected = _preset == p;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => _applyPreset(p),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? HiteraColors.accentBlue : HiteraColors.bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: isSelected ? HiteraColors.accentBlue : HiteraColors.border),
+                    ),
+                    child: Text(
+                      p,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected ? HiteraColors.bgPrimary : HiteraColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
           // Filter card
           Container(
             padding: const EdgeInsets.all(16),

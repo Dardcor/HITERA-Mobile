@@ -9,7 +9,7 @@ import 'providers/auth_provider.dart';
 import 'providers/keuangan_provider.dart';
 import 'providers/kesehatan_provider.dart';
 import 'providers/tugas_provider.dart';
-import 'providers/keseharian_provider.dart';
+
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -51,7 +51,7 @@ class HiteraApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => KeuanganProvider()),
         ChangeNotifierProvider(create: (_) => KesehatanProvider()),
         ChangeNotifierProvider(create: (_) => TugasProvider()),
-        ChangeNotifierProvider(create: (_) => KeseharianProvider()),
+
       ],
       child: MaterialApp(
         title: 'HITERA',

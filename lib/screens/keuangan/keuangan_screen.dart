@@ -313,6 +313,8 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             // Summary cards
+            _summaryTile('SALDO ANDA SEKARANG', prov.totalSaldo, HiteraColors.accentBlue, Icons.account_balance_wallet, prov.loading),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(child: _summaryTile('TOTAL PEMASUKAN', prov.totalPemasukan, HiteraColors.accentGreen, Icons.trending_up, prov.loading)),
@@ -320,8 +322,6 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                 Expanded(child: _summaryTile('TOTAL PENGELUARAN', prov.totalPengeluaran, HiteraColors.accentRed, Icons.trending_down, prov.loading)),
               ],
             ),
-            const SizedBox(height: 8),
-            _summaryTile('SALDO BERSIH', prov.saldoBersih, HiteraColors.accentBlue, Icons.account_balance_wallet, prov.loading),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -490,17 +490,21 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
         border: Border(left: BorderSide(color: color, width: 4)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 9, color: HiteraColors.textMuted, fontWeight: FontWeight.w700, letterSpacing: 1)),
-              const SizedBox(height: 4),
-              Text(loading ? '...' : formatRupiah(value),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: label == 'SALDO BERSIH' ? HiteraColors.textPrimary : color)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 9, color: HiteraColors.textMuted, fontWeight: FontWeight.w700, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Text(loading ? '...' : formatRupiah(value),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: label == 'SALDO ANDA SEKARANG' ? HiteraColors.textPrimary : color)),
+              ],
+            ),
           ),
+          const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(

@@ -46,8 +46,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _namaController.text.trim(),
       );
       if (mounted) {
-        HiteraToast.success(context, 'Registrasi berhasil! Silakan login.');
-        Navigator.pushReplacementNamed(context, '/login');
+        HiteraToast.success(context, 'Registrasi berhasil! Menyiapkan dashboard...');
+        Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } catch (e) {
       if (mounted) {
@@ -77,14 +77,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'Daftar HITERA',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: HiteraColors.accentBlue,
-                      letterSpacing: -1,
-                    ),
+                  Image.asset(
+                    'image/logo.png',
+                    height: 60,
                   ),
                   const SizedBox(height: 8),
                   const Text(

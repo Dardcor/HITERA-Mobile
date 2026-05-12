@@ -17,10 +17,35 @@ class _TugasHistoryScreenState extends State<TugasHistoryScreen> {
   String _fromDate = hariIni();
   String _toDate = hariIni();
   String _filterStatus = 'Semua';
+  String _preset = 'Minggu';
 
   @override
   void initState() {
     super.initState();
+    _applyPreset('Minggu');
+  }
+
+  void _applyPreset(String preset) {
+    final now = DateTime.now();
+    final today = now.toIso8601String().split('T').first;
+    String from;
+
+    switch (preset) {
+      case 'Minggu':
+        from = now.subtract(const Duration(days: 7)).toIso8601String().split('T').first;
+      case 'Bulan':
+        from = DateTime(now.year, now.month - 1, now.day).toIso8601String().split('T').first;
+      case 'Tahun':
+        from = DateTime(now.year - 1, now.month, now.day).toIso8601String().split('T').first;
+      default: // Semua
+        from = '2020-01-01';
+    }
+
+    setState(() {
+      _preset = preset;
+      _fromDate = from;
+      _toDate = today;
+    });
     _fetchHistory();
   }
 
@@ -38,7 +63,7 @@ class _TugasHistoryScreenState extends State<TugasHistoryScreen> {
     } catch (_) {
       _history = [];
     }
-    setState(() => _loading = false);
+    if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _pickDate(bool isFrom) async {
@@ -56,6 +81,7 @@ class _TugasHistoryScreenState extends State<TugasHistoryScreen> {
         } else {
           _toDate = d;
         }
+        _preset = '';
       });
     }
   }
@@ -81,6 +107,35 @@ class _TugasHistoryScreenState extends State<TugasHistoryScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Preset filter chips
+          Row(
+            children: ['Semua', 'Minggu', 'Bulan', 'Tahun'].map((p) {
+              final isSelected = _preset == p;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => _applyPreset(p),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? HiteraColors.accentBlue : HiteraColors.bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: isSelected ? HiteraColors.accentBlue : HiteraColors.border),
+                    ),
+                    child: Text(
+                      p,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected ? HiteraColors.bgPrimary : HiteraColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -208,36 +263,59 @@ class _TugasHistoryScreenState extends State<TugasHistoryScreen> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: HiteraColors.border),
                         ),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              width: 8, height: 8,
-                              decoration: BoxDecoration(shape: BoxShape.circle, color: prioritasColor),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                t.judul,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: HiteraColors.textPrimary,
-                                  decoration: t.status == 'selesai' ? TextDecoration.lineThrough : null,
-                                  decorationColor: HiteraColors.textMuted,
+                            Row(
+                              children: [
+                                Container(
+                                  width: 8, height: 8,
+                                  decoration: BoxDecoration(shape: BoxShape.circle, color: prioritasColor),
                                 ),
-                              ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    t.judul,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: HiteraColors.textPrimary,
+                                      decoration: t.status == 'selesai' ? TextDecoration.lineThrough : null,
+                                      decorationColor: HiteraColors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: statusBg,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    t.status.toUpperCase(),
+                                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: statusColor, letterSpacing: 0.5),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: statusBg,
-                                borderRadius: BorderRadius.circular(12),
+                            if (t.deadline != null) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const SizedBox(width: 20),
+                                  const Icon(Icons.schedule, size: 12, color: HiteraColors.textMuted),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Deadline: ${formatTanggalSingkat(t.deadline!)}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: _isOverdue(t.deadline!, t.status) ? HiteraColors.accentRed : HiteraColors.textMuted,
+                                      fontWeight: _isOverdue(t.deadline!, t.status) ? FontWeight.w700 : FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: Text(
-                                t.status.toUpperCase(),
-                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: statusColor, letterSpacing: 0.5),
-                              ),
-                            ),
+                            ],
                           ],
                         ),
                       );
@@ -249,6 +327,15 @@ class _TugasHistoryScreenState extends State<TugasHistoryScreen> {
         ],
       ),
     );
+  }
+
+  bool _isOverdue(String deadline, String status) {
+    if (status == 'selesai') return false;
+    try {
+      return DateTime.parse(deadline).isBefore(DateTime.now());
+    } catch (_) {
+      return false;
+    }
   }
 
   Widget _datePicker(String label, String value, VoidCallback onTap) {

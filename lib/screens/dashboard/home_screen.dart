@@ -82,17 +82,17 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.account_balance_wallet_rounded,
               iconBg: HiteraColors.accentBlueDim,
               iconColor: HiteraColors.accentBlue,
-              title: 'SALDO BERSIH HARI INI',
+              title: 'SALDO ANDA SEKARANG',
               onTap: () {},
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    keuangan.loading ? '...' : formatRupiah(keuangan.saldoBersih),
+                    keuangan.loading ? '...' : formatRupiah(keuangan.totalSaldo),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: keuangan.saldoBersih >= 0
+                      color: keuangan.totalSaldo >= 0
                           ? HiteraColors.accentGreen
                           : HiteraColors.accentRed,
                     ),
@@ -150,20 +150,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${kesehatan.data!.beratBadan ?? '-'} kg',
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: HiteraColors.textPrimary),
-                            ),
-                            const SizedBox(height: 8),
                             Row(
                               children: [
                                 Text('💧 ${kesehatan.data!.airMinum ?? '-'} gelas',
-                                    style: const TextStyle(fontSize: 12, color: HiteraColors.textSecondary, fontWeight: FontWeight.w500)),
+                                    style: const TextStyle(fontSize: 14, color: HiteraColors.textPrimary, fontWeight: FontWeight.w700)),
                                 const SizedBox(width: 16),
                                 Text('😴 ${kesehatan.data!.jamTidur ?? '-'} jam',
-                                    style: const TextStyle(fontSize: 12, color: HiteraColors.textSecondary, fontWeight: FontWeight.w500)),
+                                    style: const TextStyle(fontSize: 14, color: HiteraColors.textPrimary, fontWeight: FontWeight.w700)),
                               ],
                             ),
+                            if (kesehatan.data!.catatan != null && kesehatan.data!.catatan!.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Text(kesehatan.data!.catatan!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12, color: HiteraColors.textSecondary, fontStyle: FontStyle.italic)),
+                            ],
                           ],
                         )
                       : const Text('Data belum diisi',

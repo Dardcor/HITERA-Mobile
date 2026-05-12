@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
+import '../../models/models.dart';
 import '../../providers/kesehatan_provider.dart';
+import '../../services/supabase_service.dart';
 import '../../utils/utils.dart';
 import '../../widgets/toast.dart';
 
@@ -13,22 +15,41 @@ class KesehatanScreen extends StatefulWidget {
 }
 
 class _KesehatanScreenState extends State<KesehatanScreen> {
+  List<DataKesehatan> _recentHistory = [];
+  bool _historyLoading = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<KesehatanProvider>().fetch();
+      _fetchRecentHistory();
     });
+  }
+
+  Future<void> _fetchRecentHistory() async {
+    final user = SupabaseService.currentUser;
+    if (user == null) return;
+    setState(() => _historyLoading = true);
+    try {
+      final now = DateTime.now();
+      final from = now.subtract(const Duration(days: 7));
+      _recentHistory = await SupabaseService.fetchKesehatanHistory(
+        userId: user.id,
+        fromDate: from.toIso8601String().split('T').first,
+        toDate: now.toIso8601String().split('T').first,
+      );
+    } catch (_) {
+      _recentHistory = [];
+    }
+    if (mounted) setState(() => _historyLoading = false);
   }
 
   void _showFormModal() {
     final prov = context.read<KesehatanProvider>();
     final data = prov.data;
 
-    final beratCtrl = TextEditingController(text: data?.beratBadan?.toString() ?? '');
     final jamTidurCtrl = TextEditingController(text: data?.jamTidur?.toString() ?? '');
-    final langkahCtrl = TextEditingController(text: data?.langkahKaki?.toString() ?? '');
-    final tekananCtrl = TextEditingController(text: data?.tekananDarah ?? '');
     final catatanCtrl = TextEditingController(text: data?.catatan ?? '');
     int airMinum = data?.airMinum ?? 0;
     bool isSubmitting = false;
@@ -63,14 +84,6 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(child: _field('Berat Badan (kg)', beratCtrl, 'number', '70.0')),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('Jam Tidur (jam)', jamTidurCtrl, 'number', '7.5')),
-                  ],
-                ),
-                const SizedBox(height: 16),
                 _label('Air Minum (Gelas 250ml)'),
                 const SizedBox(height: 6),
                 Container(
@@ -106,13 +119,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _field('Langkah Kaki', langkahCtrl, 'number', '8000')),
-                    const SizedBox(width: 12),
-                    Expanded(child: _field('Tekanan Darah', tekananCtrl, 'text', '120/80')),
-                  ],
-                ),
+                _field('Jam Tidur (jam)', jamTidurCtrl, 'number', '7.5'),
                 const SizedBox(height: 16),
                 _label('Catatan Hari Ini'),
                 const SizedBox(height: 6),
@@ -159,11 +166,8 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                       onPressed: () async {
                         setModalState(() => isSubmitting = true);
                         final err = await prov.simpan(
-                          beratBadan: double.tryParse(beratCtrl.text),
                           airMinum: airMinum,
                           jamTidur: double.tryParse(jamTidurCtrl.text),
-                          langkahKaki: int.tryParse(langkahCtrl.text),
-                          tekananDarah: tekananCtrl.text.isNotEmpty ? tekananCtrl.text : null,
                           catatan: catatanCtrl.text.isNotEmpty ? catatanCtrl.text : null,
                         );
                         if (ctx.mounted) {
@@ -173,6 +177,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                         if (mounted) {
                           if (err == null) {
                             HiteraToast.success(context, 'Data kesehatan berhasil disimpan.');
+                            _fetchRecentHistory();
                           } else {
                             HiteraToast.error(context, 'Gagal menyimpan data kesehatan.');
                           }
@@ -252,7 +257,10 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
       ),
       body: RefreshIndicator(
         color: HiteraColors.accentBlue,
-        onRefresh: prov.fetch,
+        onRefresh: () async {
+          await prov.fetch();
+          await _fetchRecentHistory();
+        },
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -301,11 +309,8 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                 mainAxisSpacing: 10,
                 childAspectRatio: 1.6,
                 children: [
-                  _metrikCard(Icons.monitor_weight, Colors.blue, 'Berat Badan', '${prov.data?.beratBadan ?? '-'}', 'kg'),
                   _metrikCard(Icons.water_drop, Colors.cyan, 'Air Minum', '${prov.data?.airMinum ?? '-'}', 'gelas'),
                   _metrikCard(Icons.nightlight_round, Colors.indigo, 'Jam Tidur', '${prov.data?.jamTidur ?? '-'}', 'jam'),
-                  _metrikCard(Icons.directions_walk, Colors.green, 'Langkah', '${prov.data?.langkahKaki ?? '-'}', 'langkah'),
-                  _metrikCard(Icons.favorite, Colors.red, 'T. Darah', prov.data?.tekananDarah ?? '-', 'mmHg'),
                   _catatanCard(prov.data?.catatan),
                 ],
               ),
@@ -314,31 +319,89 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('ANALISIS SINGKAT',
+                const Text('RIWAYAT 7 HARI TERAKHIR',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary, letterSpacing: 1.5)),
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/kesehatan-history'),
-                  child: const Text('View History',
+                  child: const Text('Lihat Semua',
                       style: TextStyle(fontSize: 12, color: HiteraColors.accentBlue, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: HiteraColors.bgCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: HiteraColors.border),
-              ),
-              child: const Text(
-                'Fitur analisis tren 7 hari akan muncul di sini setelah Anda mengisi data minimal selama 3 hari berturut-turut.',
-                style: TextStyle(fontSize: 14, color: HiteraColors.textMuted, fontStyle: FontStyle.italic),
-              ),
-            ),
+            if (_historyLoading)
+              ...List.generate(3, (_) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Container(height: 80, decoration: BoxDecoration(color: HiteraColors.bgCardHover, borderRadius: BorderRadius.circular(12))),
+              ))
+            else if (_recentHistory.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: HiteraColors.bgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: HiteraColors.border),
+                ),
+                child: const Text(
+                  'Belum ada riwayat kesehatan.',
+                  style: TextStyle(fontSize: 14, color: HiteraColors.textMuted, fontStyle: FontStyle.italic),
+                ),
+              )
+            else
+              ..._recentHistory.map((h) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: HiteraColors.bgCard,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: HiteraColors.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(formatTanggalID(h.tanggal),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: HiteraColors.accentBlue)),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 20,
+                      runSpacing: 8,
+                      children: [
+                        _stat('Air', '${h.airMinum ?? '-'} gls'),
+                        _stat('Tidur', '${h.jamTidur ?? '-'} jam'),
+                      ],
+                    ),
+                    if (h.catatan != null && h.catatan!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.only(top: 12),
+                        decoration: const BoxDecoration(border: Border(top: BorderSide(color: HiteraColors.border))),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('CATATAN', style: TextStyle(fontSize: 9, color: HiteraColors.textMuted, letterSpacing: 1)),
+                            const SizedBox(height: 4),
+                            Text(h.catatan!, maxLines: 2, overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11, color: HiteraColors.textSecondary, fontStyle: FontStyle.italic)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              )),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _stat(String label, String value) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(fontSize: 9, color: HiteraColors.textMuted, letterSpacing: 0.5)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
+      ],
     );
   }
 

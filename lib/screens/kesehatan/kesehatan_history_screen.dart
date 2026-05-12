@@ -16,10 +16,35 @@ class _KesehatanHistoryScreenState extends State<KesehatanHistoryScreen> {
   bool _loading = true;
   String _fromDate = hariIni();
   String _toDate = hariIni();
+  String _preset = 'Minggu';
 
   @override
   void initState() {
     super.initState();
+    _applyPreset('Minggu');
+  }
+
+  void _applyPreset(String preset) {
+    final now = DateTime.now();
+    final today = now.toIso8601String().split('T').first;
+    String from;
+
+    switch (preset) {
+      case 'Minggu':
+        from = now.subtract(const Duration(days: 7)).toIso8601String().split('T').first;
+      case 'Bulan':
+        from = DateTime(now.year, now.month - 1, now.day).toIso8601String().split('T').first;
+      case 'Tahun':
+        from = DateTime(now.year - 1, now.month, now.day).toIso8601String().split('T').first;
+      default: // Semua
+        from = '2020-01-01';
+    }
+
+    setState(() {
+      _preset = preset;
+      _fromDate = from;
+      _toDate = today;
+    });
     _fetchHistory();
   }
 
@@ -34,7 +59,7 @@ class _KesehatanHistoryScreenState extends State<KesehatanHistoryScreen> {
     } catch (_) {
       _history = [];
     }
-    setState(() => _loading = false);
+    if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _pickDate(bool isFrom) async {
@@ -52,6 +77,7 @@ class _KesehatanHistoryScreenState extends State<KesehatanHistoryScreen> {
         } else {
           _toDate = d;
         }
+        _preset = '';
       });
     }
   }
@@ -71,6 +97,36 @@ class _KesehatanHistoryScreenState extends State<KesehatanHistoryScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Preset filter chips
+          Row(
+            children: ['Semua', 'Minggu', 'Bulan', 'Tahun'].map((p) {
+              final isSelected = _preset == p;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => _applyPreset(p),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isSelected ? HiteraColors.accentBlue : HiteraColors.bgCard,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: isSelected ? HiteraColors.accentBlue : HiteraColors.border),
+                    ),
+                    child: Text(
+                      p,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected ? HiteraColors.bgPrimary : HiteraColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          // Date pickers
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -105,7 +161,7 @@ class _KesehatanHistoryScreenState extends State<KesehatanHistoryScreen> {
           if (_loading)
             ...List.generate(3, (_) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Container(height: 120, decoration: BoxDecoration(color: HiteraColors.bgCardHover, borderRadius: BorderRadius.circular(12))),
+              child: Container(height: 100, decoration: BoxDecoration(color: HiteraColors.bgCardHover, borderRadius: BorderRadius.circular(12))),
             ))
           else if (_history.isEmpty)
             const Padding(
@@ -132,11 +188,8 @@ class _KesehatanHistoryScreenState extends State<KesehatanHistoryScreen> {
                     spacing: 20,
                     runSpacing: 8,
                     children: [
-                      _stat('Berat', '${h.beratBadan ?? '-'} kg'),
                       _stat('Air', '${h.airMinum ?? '-'} gls'),
                       _stat('Tidur', '${h.jamTidur ?? '-'} jam'),
-                      _stat('Langkah', '${h.langkahKaki ?? '-'}'),
-                      _stat('T. Darah', h.tekananDarah ?? '-'),
                     ],
                   ),
                   if (h.catatan != null && h.catatan!.isNotEmpty) ...[
