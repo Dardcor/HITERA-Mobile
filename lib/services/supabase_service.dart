@@ -5,7 +5,7 @@ class SupabaseService {
   static SupabaseClient get client => Supabase.instance.client;
   static User? get currentUser => client.auth.currentUser;
 
-  // === AUTH ===
+  
   static Future<AuthResponse> signIn(String email, String password) {
     return client.auth.signInWithPassword(email: email, password: password);
   }
@@ -24,13 +24,12 @@ class SupabaseService {
 
   static Future<void> signOut() => client.auth.signOut();
 
-  // === KEUANGAN ===
+  
   static Future<List<Transaksi>> fetchTransaksi(String userId, String tanggal) async {
     final data = await client
         .from('transaksi')
         .select()
         .eq('user_id', userId)
-        .eq('tanggal', tanggal)
         .order('created_at', ascending: false);
     return (data as List).map((e) => Transaksi.fromJson(e)).toList();
   }
@@ -74,7 +73,7 @@ class SupabaseService {
     return client.from('transaksi').delete().eq('id', id);
   }
 
-  // === KESEHATAN ===
+  
   static Future<DataKesehatan?> fetchKesehatan(String userId, String tanggal) async {
     try {
       final data = await client
@@ -109,13 +108,22 @@ class SupabaseService {
     return client.from('kesehatan').upsert(data, onConflict: 'user_id,tanggal');
   }
 
-  // === TUGAS ===
+  
   static Future<List<Tugas>> fetchTugas(String userId, String tanggal) async {
     final data = await client
         .from('tugas')
         .select()
         .eq('user_id', userId)
         .eq('tanggal_target', tanggal)
+        .order('created_at', ascending: false);
+    return (data as List).map((e) => Tugas.fromJson(e)).toList();
+  }
+
+  static Future<List<Tugas>> fetchAllTugas(String userId) async {
+    final data = await client
+        .from('tugas')
+        .select()
+        .eq('user_id', userId)
         .order('created_at', ascending: false);
     return (data as List).map((e) => Tugas.fromJson(e)).toList();
   }
@@ -165,7 +173,7 @@ class SupabaseService {
     return client.from('tugas').delete().eq('id', id);
   }
 
-  // === KESEHARIAN TODOS ===
+  
   static Future<List<Map<String, dynamic>>> fetchKeseharianTodos(String userId, String date) async {
     final data = await client
         .from('keseharian_todos')
@@ -188,31 +196,34 @@ class SupabaseService {
     return client.from('keseharian_todos').delete().eq('id', id);
   }
 
-  // === KESEHARIAN JURNAL ===
-  static Future<String?> fetchKeseharianJurnal(String userId, String date) async {
+  
+  static Future<Map<String, dynamic>?> fetchUserSettings(String userId) async {
     try {
       final data = await client
-          .from('keseharian_jurnal')
-          .select('content')
+          .from('user_settings')
+          .select()
           .eq('user_id', userId)
-          .eq('date', date)
           .maybeSingle();
-      if (data == null) return null;
-      return data['content'] as String?;
+      return data;
     } catch (_) {
       return null;
     }
   }
 
-  static Future<void> saveKeseharianJurnal(String userId, String date, String content) {
-    return client.from('keseharian_jurnal').upsert({
-      'user_id': userId,
-      'date': date,
-      'content': content,
-    }, onConflict: 'user_id, date');
+  static Future<void> updateUserSettings(String userId, Map<String, dynamic> updates) {
+    updates['user_id'] = userId;
+    updates['updated_at'] = DateTime.now().toIso8601String();
+    return client.from('user_settings').upsert(updates, onConflict: 'user_id');
   }
 
-  // === PROFILE ===
+  static Future<void> deleteAllUserData(String userId) async {
+    await client.from('transaksi').delete().eq('user_id', userId);
+    await client.from('kesehatan').delete().eq('user_id', userId);
+    await client.from('tugas').delete().eq('user_id', userId);
+    await client.from('keseharian_todos').delete().eq('user_id', userId);
+  }
+
+  
   static Future<Map<String, dynamic>?> fetchProfile(String userId) async {
     try {
       final data = await client

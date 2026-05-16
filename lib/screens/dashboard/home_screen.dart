@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/keuangan_provider.dart';
 import '../../providers/kesehatan_provider.dart';
 import '../../providers/tugas_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../utils/utils.dart';
+import '../pengaturan/notifikasi_screen.dart';
+import 'riwayat_notifikasi_screen.dart';
+import '../../services/supabase_service.dart';
+import '../../services/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,8 +27,23 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<KeuanganProvider>().fetch();
       context.read<KesehatanProvider>().fetch();
-      context.read<TugasProvider>().fetch();
+      context.read<TugasProvider>().fetch().then((_) {
+        _checkNotifications();
+      });
     });
+  }
+
+  Future<void> _checkNotifications() async {
+    final user = context.read<AuthProvider>().user;
+    if (user == null) return;
+    
+    final data = await SupabaseService.fetchUserSettings(user.id);
+    if (data == null) return;
+    
+    final tasks = context.read<TugasProvider>().tugas;
+    final activeTasks = tasks.where((t) => t.status == 'aktif').toList();
+    
+    await NotificationService.generateDailyHistoryAndSpam(user.id, data, activeTasks);
   }
 
   @override
@@ -31,11 +52,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final keuangan = context.watch<KeuanganProvider>();
     final kesehatan = context.watch<KesehatanProvider>();
     final tugas = context.watch<TugasProvider>();
+    final settings = context.watch<SettingsProvider>();
     final tgl = hariIni();
 
     return Scaffold(
       backgroundColor: HiteraColors.bgPrimary,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -49,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             Text(
-              '${getGreeting()}, ${auth.userName}',
+              '${getGreeting(settings)}, ${auth.userName}',
               style: const TextStyle(
                 color: HiteraColors.textPrimary,
                 fontSize: 20,
@@ -60,10 +83,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings_rounded, color: HiteraColors.textMuted),
-            onPressed: () => Navigator.pushNamed(context, '/pengaturan'),
+            icon: const Icon(Icons.notifications_none_rounded, color: HiteraColors.textPrimary),
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RiwayatNotifikasiScreen())),
           ),
+          const SizedBox(width: 8),
         ],
+        
       ),
       body: RefreshIndicator(
         color: HiteraColors.accentBlue,
@@ -77,12 +102,12 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // === KEUANGAN CARD ===
+            
             _buildSummaryCard(
               icon: Icons.account_balance_wallet_rounded,
               iconBg: HiteraColors.accentBlueDim,
               iconColor: HiteraColors.accentBlue,
-              title: 'SALDO ANDA SEKARANG',
+              title: settings.t('balance_now').toUpperCase(),
               onTap: () {},
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,8 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('PEMASUKAN',
-                                style: TextStyle(fontSize: 9, color: HiteraColors.textMuted, letterSpacing: 1)),
+                            Text(settings.t('income').toUpperCase(),
+                                style: const TextStyle(fontSize: 9, color: HiteraColors.textMuted, letterSpacing: 1)),
                             Text(
                               '+${keuangan.loading ? "..." : formatRupiah(keuangan.totalPemasukan)}',
                               style: const TextStyle(
@@ -120,8 +145,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('PENGELUARAN',
-                                style: TextStyle(fontSize: 9, color: HiteraColors.textMuted, letterSpacing: 1)),
+                            Text(settings.t('expense').toUpperCase(),
+                                style: const TextStyle(fontSize: 9, color: HiteraColors.textMuted, letterSpacing: 1)),
                             Text(
                               '-${keuangan.loading ? "..." : formatRupiah(keuangan.totalPengeluaran)}',
                               style: const TextStyle(
@@ -132,17 +157,63 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
+                  if (keuangan.trendSaldo.isNotEmpty && !keuangan.loading) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 80,
+                      child: LineChart(
+                        LineChartData(
+                          gridData: const FlGridData(show: false),
+                          titlesData: const FlTitlesData(show: false),
+                          borderData: FlBorderData(show: false),
+                          lineTouchData: const LineTouchData(enabled: false),
+                          minX: 0,
+                          maxX: 6,
+                          minY: keuangan.trendSaldo.map((e) => e['saldo'] as double).reduce((a, b) => a < b ? a : b),
+                          maxY: keuangan.trendSaldo.map((e) => e['saldo'] as double).reduce((a, b) => a > b ? a : b),
+                          lineBarsData: [
+                            LineChartBarData(
+                              spots: keuangan.trendSaldo.asMap().entries.map((e) {
+                                return FlSpot(e.key.toDouble(), e.value['saldo'] as double);
+                              }).toList(),
+                              isCurved: true,
+                              color: HiteraColors.accentBlue,
+                              barWidth: 2,
+                              isStrokeCapRound: true,
+                              dotData: FlDotData(
+                                show: true,
+                                checkToShowDot: (spot, barData) {
+                                  return spot.x == 0 || spot.x == 6;
+                                },
+                                getDotPainter: (spot, percent, barData, index) {
+                                  return FlDotCirclePainter(
+                                    radius: 3,
+                                    color: HiteraColors.accentBlue,
+                                    strokeWidth: 0,
+                                  );
+                                },
+                              ),
+                              belowBarData: BarAreaData(
+                                show: true,
+                                color: HiteraColors.accentBlueDim,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(height: 12),
 
-            // === KESEHATAN CARD ===
+            
             _buildSummaryCard(
               icon: Icons.favorite_rounded,
               iconBg: HiteraColors.accentGreenDim,
               iconColor: HiteraColors.accentGreen,
-              title: 'KESEHATAN HARI INI',
+              title: settings.t('health_today').toUpperCase(),
               onTap: () {},
               child: kesehatan.loading
                   ? const Text('...', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: HiteraColors.textPrimary))
@@ -152,10 +223,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Row(
                               children: [
-                                Text('💧 ${kesehatan.data!.airMinum ?? '-'} gelas',
+                                Text('💧 ${kesehatan.data!.airMinum ?? '-'} ${settings.t('glasses').toLowerCase()}',
                                     style: const TextStyle(fontSize: 14, color: HiteraColors.textPrimary, fontWeight: FontWeight.w700)),
                                 const SizedBox(width: 16),
-                                Text('😴 ${kesehatan.data!.jamTidur ?? '-'} jam',
+                                Text('😴 ${kesehatan.data!.jamTidur ?? '-'} ${settings.t('hours').toLowerCase()}',
+                                    style: const TextStyle(fontSize: 14, color: HiteraColors.textPrimary, fontWeight: FontWeight.w700)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Text('🏃 ${kesehatan.data!.olahragaJam ?? 0}${settings.t('hour_short')} ${kesehatan.data!.olahragaMenit ?? 0}${settings.t('minute_short')}',
                                     style: const TextStyle(fontSize: 14, color: HiteraColors.textPrimary, fontWeight: FontWeight.w700)),
                               ],
                             ),
@@ -173,18 +251,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 12),
 
-            // === TUGAS CARD ===
+            
             _buildSummaryCard(
               icon: Icons.check_box_rounded,
               iconBg: HiteraColors.accentRedDim,
               iconColor: HiteraColors.accentRed,
-              title: 'TUGAS HARI INI',
+              title: settings.t('tasks_today').toUpperCase(),
               onTap: () {},
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tugas.loading ? '...' : '${tugas.tugasSelesai.length}/${tugas.tugas.length} Tugas',
+                    tugas.loading ? '...' : '${tugas.tugasSelesai.length}/${tugas.tugas.length} ${settings.t('tasks')}',
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: HiteraColors.textPrimary),
                   ),
                   const SizedBox(height: 4),
@@ -203,8 +281,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 8),
                   Text(
                     tugas.tugasAktif.isNotEmpty
-                        ? '${tugas.tugasAktif.length} tugas masih aktif'
-                        : 'Semua tugas selesai! 🙌',
+                        ? '${tugas.tugasAktif.length} ${settings.t('tasks').toLowerCase()} ${settings.t('filter_active').toLowerCase()}'
+                        : '${settings.t('all_tasks_done')} 🙌',
                     style: const TextStyle(fontSize: 12, color: HiteraColors.textSecondary),
                   ),
                 ],
@@ -212,17 +290,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
 
-            // === TUGAS UTAMA LIST ===
             _buildSectionCard(
-              title: 'Tugas Utama',
-              actionLabel: 'Lihat Semua',
+              title: settings.t('main_tasks'),
+              actionLabel: settings.t('see_all'),
               onAction: () {},
               child: tugas.tugasAktif.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(32),
+                  ? Padding(
+                      padding: const EdgeInsets.all(32),
                       child: Center(
-                        child: Text('Tidak ada tugas aktif hari ini',
-                            style: TextStyle(color: HiteraColors.textMuted, fontSize: 14, fontStyle: FontStyle.italic)),
+                        child: Text(settings.t('no_active_tasks'),
+                            style: const TextStyle(color: HiteraColors.textMuted, fontSize: 14, fontStyle: FontStyle.italic)),
                       ),
                     )
                   : Column(
@@ -263,7 +340,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  t.prioritas.toUpperCase(),
+                                  t.prioritas == 'tinggi' ? settings.t('priority_high').toUpperCase() :
+                                  t.prioritas == 'sedang' ? settings.t('priority_medium').toUpperCase() :
+                                  settings.t('priority_low').toUpperCase(),
                                   style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: prioritasColor, letterSpacing: 0.5),
                                 ),
                               ),

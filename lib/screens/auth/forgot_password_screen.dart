@@ -32,7 +32,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       }
     } catch (e) {
       if (mounted) {
-        HiteraToast.error(context, 'Gagal mengirim email reset password.');
+        HiteraToast.error(context, 'Failed to send password reset email.');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

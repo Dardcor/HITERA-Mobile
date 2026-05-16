@@ -63,7 +63,7 @@ class LoadingOverlay extends StatelessWidget {
   }
 }
 
-/// A reusable animated loading spinner with pulse effect
+
 class _PulsingLoader extends StatefulWidget {
   const _PulsingLoader();
 
@@ -143,7 +143,7 @@ class _PulsingLoaderState extends State<_PulsingLoader>
   }
 }
 
-/// Inline button loading indicator - matches website's Loader2 + animate-spin
+
 class ButtonLoadingIndicator extends StatelessWidget {
   final double size;
   final Color? color;

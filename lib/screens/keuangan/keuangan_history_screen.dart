@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
+import '../../providers/settings_provider.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/utils.dart';
 
@@ -26,18 +29,18 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
   }
 
   void _applyPreset(String preset) {
-    final now = DateTime.now();
-    final today = now.toIso8601String().split('T').first;
+    final now = nowWIB();
+    final today = hariIni();
     String from;
 
     switch (preset) {
       case 'Minggu':
-        from = now.subtract(const Duration(days: 7)).toIso8601String().split('T').first;
+        from = tambahHari(hariIni(), -7);
       case 'Bulan':
-        from = DateTime(now.year, now.month - 1, now.day).toIso8601String().split('T').first;
+        from = DateFormat('yyyy-MM-dd').format(DateTime(now.year, now.month - 1, now.day));
       case 'Tahun':
-        from = DateTime(now.year - 1, now.month, now.day).toIso8601String().split('T').first;
-      default: // Semua
+        from = DateFormat('yyyy-MM-dd').format(DateTime(now.year - 1, now.month, now.day));
+      default: 
         from = '2020-01-01';
     }
 
@@ -88,7 +91,6 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Group by date
     final grouped = <String, List<Transaksi>>{};
     for (final t in _transaksi) {
       grouped.putIfAbsent(t.tanggal, () => []).add(t);
@@ -108,7 +110,7 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Preset filter chips
+          
           Row(
             children: ['Semua', 'Minggu', 'Bulan', 'Tahun'].map((p) {
               final isSelected = _preset == p;
@@ -137,7 +139,7 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
             }).toList(),
           ),
           const SizedBox(height: 12),
-          // Filter card
+          
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -219,10 +221,10 @@ class _KeuanganHistoryScreenState extends State<KeuanganHistoryScreen> {
               child: Container(height: 80, decoration: BoxDecoration(color: HiteraColors.bgCardHover, borderRadius: BorderRadius.circular(12))),
             ))
           else if (dates.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 60),
-              child: Center(child: Text('Tidak ada data untuk periode ini.',
-                  style: TextStyle(color: HiteraColors.textMuted, fontStyle: FontStyle.italic))),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 60),
+              child: Center(child: Text(context.read<SettingsProvider>().t('no_data_period'),
+                  style: const TextStyle(color: HiteraColors.textMuted, fontStyle: FontStyle.italic))),
             )
           else
             ...dates.map((date) {

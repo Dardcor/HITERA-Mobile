@@ -1,7 +1,7 @@
 class Transaksi {
   final String id;
   final String userId;
-  final String jenis; // 'pemasukan' | 'pengeluaran'
+  final String jenis; 
   final double jumlah;
   final String kategori;
   final String? deskripsi;
@@ -51,6 +51,8 @@ class DataKesehatan {
   final int? airMinum;
   final double? jamTidur;
   final String? catatan;
+  final int? olahragaJam;
+  final int? olahragaMenit;
   final String createdAt;
 
   DataKesehatan({
@@ -60,6 +62,8 @@ class DataKesehatan {
     this.airMinum,
     this.jamTidur,
     this.catatan,
+    this.olahragaJam,
+    this.olahragaMenit,
     required this.createdAt,
   });
 
@@ -71,6 +75,8 @@ class DataKesehatan {
       airMinum: json['air_minum'] as int?,
       jamTidur: (json['jam_tidur'] as num?)?.toDouble(),
       catatan: json['catatan'] as String?,
+      olahragaJam: json['olahraga_jam'] as int?,
+      olahragaMenit: json['olahraga_menit'] as int?,
       createdAt: json['created_at'] as String,
     );
   }
@@ -81,10 +87,11 @@ class Tugas {
   final String userId;
   final String judul;
   final String? deskripsi;
-  final String prioritas; // 'rendah' | 'sedang' | 'tinggi'
-  final String status; // 'aktif' | 'selesai' | 'ditunda'
+  final String prioritas; 
+  final String status; 
   final String tanggalTarget;
   final String? deadline;
+  final String? waktuDeadline;
   final String? tanggalSelesai;
   final String createdAt;
 
@@ -97,6 +104,7 @@ class Tugas {
     required this.status,
     required this.tanggalTarget,
     this.deadline,
+    this.waktuDeadline,
     this.tanggalSelesai,
     required this.createdAt,
   });
@@ -111,6 +119,7 @@ class Tugas {
       status: json['status'] as String,
       tanggalTarget: json['tanggal_target'] as String,
       deadline: json['deadline'] as String?,
+      waktuDeadline: json['waktu_deadline'] as String?,
       tanggalSelesai: json['tanggal_selesai'] as String?,
       createdAt: json['created_at'] as String,
     );
@@ -125,6 +134,7 @@ class Tugas {
       'status': status,
       'tanggal_target': tanggalTarget,
       'deadline': deadline,
+      'waktu_deadline': waktuDeadline,
     };
   }
 }

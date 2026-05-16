@@ -5,6 +5,8 @@ import '../keuangan/keuangan_screen.dart';
 import '../kesehatan/kesehatan_screen.dart';
 import '../tugas/tugas_screen.dart';
 import '../pengaturan/pengaturan_screen.dart';
+import 'package:provider/provider.dart';
+import '../../providers/settings_provider.dart';
 
 class DashboardShell extends StatefulWidget {
   const DashboardShell({super.key});
@@ -26,6 +28,7 @@ class _DashboardShellState extends State<DashboardShell> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
     return Scaffold(
       backgroundColor: HiteraColors.bgPrimary,
       body: IndexedStack(
@@ -39,12 +42,12 @@ class _DashboardShellState extends State<DashboardShell> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (i) => setState(() => _currentIndex = i),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.dashboard_rounded), label: 'HOME'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet_rounded), label: 'FINANCE'),
-            BottomNavigationBarItem(icon: Icon(Icons.favorite_rounded), label: 'HEALTH'),
-            BottomNavigationBarItem(icon: Icon(Icons.check_box_rounded), label: 'TASKS'),
-            BottomNavigationBarItem(icon: Icon(Icons.settings_rounded), label: 'SETTING'),
+          items: [
+            BottomNavigationBarItem(icon: const Icon(Icons.dashboard_rounded), label: settings.t('home').toUpperCase()),
+            BottomNavigationBarItem(icon: const Icon(Icons.account_balance_wallet_rounded), label: settings.t('finance').toUpperCase()),
+            BottomNavigationBarItem(icon: const Icon(Icons.favorite_rounded), label: settings.t('health').toUpperCase()),
+            BottomNavigationBarItem(icon: const Icon(Icons.check_box_rounded), label: settings.t('tasks').toUpperCase()),
+            BottomNavigationBarItem(icon: const Icon(Icons.settings_rounded), label: settings.t('settings').toUpperCase()),
           ],
         ),
       ),

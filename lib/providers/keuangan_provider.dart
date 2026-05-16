@@ -9,21 +9,20 @@ class KeuanganProvider extends ChangeNotifier {
   String _tanggal = hariIni();
 
   double _totalSaldo = 0;
+  double _totalPemasukan = 0;
+  double _totalPengeluaran = 0;
+
+  List<Map<String, dynamic>> _trendSaldo = [];
 
   List<Transaksi> get transaksi => _transaksi;
   bool get loading => _loading;
   String get tanggal => _tanggal;
   double get totalSaldo => _totalSaldo;
+  double get totalPemasukan => _totalPemasukan;
+  double get totalPengeluaran => _totalPengeluaran;
+  List<Map<String, dynamic>> get trendSaldo => _trendSaldo;
 
-  double get totalPemasukan => _transaksi
-      .where((t) => t.jenis == 'pemasukan')
-      .fold(0, (sum, t) => sum + t.jumlah);
-
-  double get totalPengeluaran => _transaksi
-      .where((t) => t.jenis == 'pengeluaran')
-      .fold(0, (sum, t) => sum + t.jumlah);
-
-  double get saldoBersih => totalPemasukan - totalPengeluaran;
+  double get saldoBersih => _totalPemasukan - _totalPengeluaran;
 
   void setTanggal(String t) {
     _tanggal = t;
@@ -40,19 +39,52 @@ class KeuanganProvider extends ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
-      // Fetch cumulative transactions for total balance
+      
       final allData = await SupabaseService.client
           .from('transaksi')
-          .select('jenis, jumlah')
+          .select('jenis, jumlah, tanggal')
           .eq('user_id', user.id);
       
-      _totalSaldo = (allData as List).fold(0.0, (sum, t) {
-        return t['jenis'] == 'pemasukan' ? sum + t['jumlah'] : sum - t['jumlah'];
-      });
+      double pemasukan = 0;
+      double pengeluaran = 0;
+      Map<String, double> dailyChange = {};
+
+      for (var t in allData as List) {
+        double amt = (t['jumlah'] as num).toDouble();
+        String date = t['tanggal'].toString();
+
+        if (t['jenis'] == 'pemasukan') {
+          pemasukan += amt;
+          dailyChange[date] = (dailyChange[date] ?? 0) + amt;
+        } else {
+          pengeluaran += amt;
+          dailyChange[date] = (dailyChange[date] ?? 0) - amt;
+        }
+      }
+      _totalPemasukan = pemasukan;
+      _totalPengeluaran = pengeluaran;
+      _totalSaldo = pemasukan - pengeluaran;
+
+      
+      List<Map<String, dynamic>> trend = [];
+      String today = hariIni();
+      double currentBalance = _totalSaldo;
+      
+      for (int i = 0; i < 7; i++) {
+        String currentDate = tambahHari(today, -i);
+        trend.insert(0, {
+          'tanggal': currentDate,
+          'saldo': currentBalance,
+        });
+        double changeToday = dailyChange[currentDate] ?? 0;
+        currentBalance -= changeToday;
+      }
+      _trendSaldo = trend;
 
       _transaksi = await SupabaseService.fetchTransaksi(user.id, _tanggal);
     } catch (_) {
       _transaksi = [];
+      _trendSaldo = [];
     }
     _loading = false;
     notifyListeners();

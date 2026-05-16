@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/tugas_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../utils/utils.dart';
 import '../../widgets/toast.dart';
 
@@ -23,11 +24,12 @@ class _TugasScreenState extends State<TugasScreen> {
     });
   }
 
-  void _showAddModal() {
+  void _showAddModal(SettingsProvider settings) {
     final judulCtrl = TextEditingController();
     final deskripsiCtrl = TextEditingController();
     String prioritas = 'sedang';
     String? deadline;
+    String? waktuDeadline;
     bool isSubmitting = false;
 
     showModalBottomSheet(
@@ -51,8 +53,8 @@ class _TugasScreenState extends State<TugasScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Tambah Tugas Baru',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
+                    Text(settings.t('add_task'),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
                     GestureDetector(
                       onTap: () => Navigator.pop(ctx),
                       child: const Icon(Icons.close, color: HiteraColors.textMuted, size: 22),
@@ -60,7 +62,7 @@ class _TugasScreenState extends State<TugasScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _label('Judul Tugas'),
+                _label(settings.t('task_title')),
                 const SizedBox(height: 6),
                 TextField(
                   controller: judulCtrl,
@@ -68,7 +70,7 @@ class _TugasScreenState extends State<TugasScreen> {
                   decoration: const InputDecoration(hintText: 'Contoh: Beli susu'),
                 ),
                 const SizedBox(height: 16),
-                _label('Deskripsi (Opsional)'),
+                _label(settings.t('description_optional')),
                 const SizedBox(height: 6),
                 TextField(
                   controller: deskripsiCtrl,
@@ -77,58 +79,115 @@ class _TugasScreenState extends State<TugasScreen> {
                   decoration: const InputDecoration(hintText: 'Tambahkan detail...'),
                 ),
                 const SizedBox(height: 16),
-                _label('Deadline (Opsional)'),
-                const SizedBox(height: 6),
-                GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: ctx,
-                      initialDate: deadline != null ? DateTime.parse(deadline!) : DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime(2030),
-                    );
-                    if (picked != null) {
-                      setModalState(() {
-                        deadline = picked.toIso8601String().split('T').first;
-                      });
-                    }
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: HiteraColors.bgSecondary,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: HiteraColors.border),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          deadline != null ? formatTanggalID(deadline!) : 'Pilih tanggal deadline',
-                          style: TextStyle(
-                            color: deadline != null ? HiteraColors.textPrimary : HiteraColors.textMuted,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (deadline != null)
-                              GestureDetector(
-                                onTap: () => setModalState(() => deadline = null),
-                                child: const Icon(Icons.close, color: HiteraColors.textMuted, size: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _label(settings.t('deadline_optional')),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: ctx,
+                                initialDate: deadline != null ? DateTime.parse(deadline!) : nowWIB(),
+                                firstDate: nowWIB(),
+                                lastDate: DateTime(2030),
+                              );
+                              if (picked != null) {
+                                setModalState(() {
+                                  deadline = picked.toIso8601String().split('T').first;
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: HiteraColors.bgSecondary,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: HiteraColors.border),
                               ),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.calendar_today, color: HiteraColors.textMuted, size: 16),
-                          ],
-                        ),
-                      ],
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    deadline != null ? formatTanggalID(deadline!) : 'Pilih tanggal',
+                                    style: TextStyle(
+                                      color: deadline != null ? HiteraColors.textPrimary : HiteraColors.textMuted,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  if (deadline != null)
+                                    GestureDetector(
+                                      onTap: () => setModalState(() => deadline = null),
+                                      child: const Icon(Icons.close, color: HiteraColors.textMuted, size: 18),
+                                    )
+                                  else
+                                    const Icon(Icons.calendar_today, color: HiteraColors.textMuted, size: 16),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _label('Jam Deadline'),
+                          const SizedBox(height: 6),
+                          GestureDetector(
+                            onTap: () async {
+                              final picked = await showTimePicker(
+                                context: ctx,
+                                initialTime: waktuDeadline != null 
+                                  ? TimeOfDay(hour: int.parse(waktuDeadline!.split(':')[0]), minute: int.parse(waktuDeadline!.split(':')[1]))
+                                  : TimeOfDay.now(),
+                              );
+                              if (picked != null) {
+                                setModalState(() {
+                                  waktuDeadline = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                                });
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              decoration: BoxDecoration(
+                                color: HiteraColors.bgSecondary,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: HiteraColors.border),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    waktuDeadline ?? 'Pilih jam',
+                                    style: TextStyle(
+                                      color: waktuDeadline != null ? HiteraColors.textPrimary : HiteraColors.textMuted,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  if (waktuDeadline != null)
+                                    GestureDetector(
+                                      onTap: () => setModalState(() => waktuDeadline = null),
+                                      child: const Icon(Icons.close, color: HiteraColors.textMuted, size: 18),
+                                    )
+                                  else
+                                    const Icon(Icons.access_time, color: HiteraColors.textMuted, size: 16),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
-                _label('Prioritas'),
+                _label(settings.t('priority')),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.all(4),
@@ -156,7 +215,9 @@ class _TugasScreenState extends State<TugasScreen> {
                             ),
                             child: Center(
                               child: Text(
-                                p[0].toUpperCase() + p.substring(1),
+                                p == 'tinggi' ? settings.t('priority_high') :
+                                p == 'sedang' ? settings.t('priority_medium') :
+                                settings.t('priority_low'),
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
@@ -176,15 +237,15 @@ class _TugasScreenState extends State<TugasScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: HiteraColors.textSecondary,
-                        side: const BorderSide(color: HiteraColors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: HiteraColors.textSecondary,
+                          side: const BorderSide(color: HiteraColors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(settings.t('cancel')),
                       ),
-                      child: const Text('Batal'),
-                    ),
                     const SizedBox(width: 12),
                     isSubmitting
                       ? Container(
@@ -193,15 +254,15 @@ class _TugasScreenState extends State<TugasScreen> {
                             color: HiteraColors.accentBlue.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(
+                              const SizedBox(
                                 width: 16, height: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               ),
-                              SizedBox(width: 8),
-                              Text('Menyimpan...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                              const SizedBox(width: 8),
+                              Text('${settings.t('loading')}...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
                             ],
                           ),
                         )
@@ -214,17 +275,18 @@ class _TugasScreenState extends State<TugasScreen> {
                           deskripsi: deskripsiCtrl.text.isNotEmpty ? deskripsiCtrl.text : null,
                           prioritas: prioritas,
                           deadline: deadline,
+                          waktuDeadline: waktuDeadline,
                         );
                         if (ctx.mounted) {
                           setModalState(() => isSubmitting = false);
                           Navigator.pop(ctx);
                         }
                         if (mounted) {
-                          if (err == null) {
-                            HiteraToast.success(context, 'Tugas berhasil ditambahkan.');
-                          } else {
-                            HiteraToast.error(context, 'Gagal menambahkan tugas.');
-                          }
+                            if (err == null) {
+                              HiteraToast.success(context, settings.t('task_added'));
+                            } else {
+                              HiteraToast.error(context, settings.t('error'));
+                            }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -232,7 +294,7 @@ class _TugasScreenState extends State<TugasScreen> {
                         foregroundColor: HiteraColors.bgPrimary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Tambah Tugas', style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: Text(settings.t('add_task'), style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
@@ -251,9 +313,23 @@ class _TugasScreenState extends State<TugasScreen> {
     );
   }
 
+  
+  Map<String, List<dynamic>> _groupByTanggal(List displayTugas) {
+    final Map<String, List<dynamic>> grouped = {};
+    for (final t in displayTugas) {
+      final key = t.tanggalTarget;
+      grouped.putIfAbsent(key, () => []);
+      grouped[key]!.add(t);
+    }
+    
+    final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+    return {for (var k in sortedKeys) k: grouped[k]!};
+  }
+
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<TugasProvider>();
+    final settings = context.watch<SettingsProvider>();
 
     final displayTugas = _filter == 'semua'
         ? prov.tugas
@@ -261,31 +337,17 @@ class _TugasScreenState extends State<TugasScreen> {
             ? prov.tugasAktif
             : prov.tugasSelesai;
 
+    final grouped = _groupByTanggal(displayTugas);
+
     return Scaffold(
       backgroundColor: HiteraColors.bgPrimary,
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Daftar Tugas',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                _navButton(Icons.chevron_left, prov.prevDay),
-                const SizedBox(width: 8),
-                Text(formatTanggalID(prov.tanggal),
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: HiteraColors.accentBlue)),
-                const SizedBox(width: 8),
-                _navButton(Icons.chevron_right, prov.nextDay),
-              ],
-            ),
-          ],
-        ),
+        title: Text(settings.t('tasks'),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded, color: HiteraColors.accentBlue),
-            onPressed: _showAddModal,
+            onPressed: () => _showAddModal(settings),
           ),
         ],
       ),
@@ -295,82 +357,34 @@ class _TugasScreenState extends State<TugasScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Progress card
+            
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: HiteraColors.bgCard,
-                borderRadius: BorderRadius.circular(12),
+                color: HiteraColors.bgSecondary,
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: HiteraColors.border),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('PROGRESS HARI INI',
-                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: HiteraColors.textMuted, letterSpacing: 1.5)),
-                      Text('${prov.progress}% Selesai',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: HiteraColors.accentBlue)),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: HiteraColors.border),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: LinearProgressIndicator(
-                          value: prov.progress / 100,
-                          backgroundColor: HiteraColors.bgSecondary,
-                          valueColor: const AlwaysStoppedAnimation(HiteraColors.accentBlue),
-                          minHeight: 10,
+              child: Row(
+                children: ['semua', 'aktif', 'selesai'].map((f) {
+                  final isSelected = _filter == f;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _filter = f),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? HiteraColors.bgCard : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: isSelected
+                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)]
+                              : null,
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '${prov.tugasSelesai.length} dari ${prov.tugas.length} tugas berhasil diselesaikan',
-                    style: const TextStyle(fontSize: 12, color: HiteraColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Filter tabs + history link
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: HiteraColors.bgSecondary,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: HiteraColors.border),
-                  ),
-                  child: Row(
-                    children: ['semua', 'aktif', 'selesai'].map((f) {
-                      final isSelected = _filter == f;
-                      return GestureDetector(
-                        onTap: () => setState(() => _filter = f),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected ? HiteraColors.bgCard : Colors.transparent,
-                            borderRadius: BorderRadius.circular(6),
-                            boxShadow: isSelected
-                                ? [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)]
-                                : null,
-                          ),
+                        child: Center(
                           child: Text(
-                            f[0].toUpperCase() + f.substring(1),
+                            f == 'semua' ? settings.t('filter_all') :
+                            f == 'aktif' ? settings.t('filter_active') :
+                            settings.t('filter_done'),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -378,20 +392,15 @@ class _TugasScreenState extends State<TugasScreen> {
                             ),
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.pushNamed(context, '/tugas-history'),
-                  child: const Text('History Tugas',
-                      style: TextStyle(fontSize: 12, color: HiteraColors.accentBlue, fontWeight: FontWeight.w700)),
-                ),
-              ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
             const SizedBox(height: 16),
 
-            // Task list
+            
             if (prov.loading)
               ...List.generate(3, (_) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -416,134 +425,138 @@ class _TugasScreenState extends State<TugasScreen> {
                       child: const Icon(Icons.list_alt, color: HiteraColors.textMuted, size: 32),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Tidak ada tugas dalam kategori ini.',
-                        style: TextStyle(color: HiteraColors.textMuted, fontStyle: FontStyle.italic)),
+                    Text(settings.t('no_tasks'),
+                        style: const TextStyle(color: HiteraColors.textMuted, fontStyle: FontStyle.italic)),
                   ],
                 ),
               )
             else
-              ...displayTugas.map((t) {
-                final isSelesai = t.status == 'selesai';
-                final prioritasColor = t.prioritas == 'tinggi'
-                    ? HiteraColors.accentRed
-                    : t.prioritas == 'sedang'
-                        ? HiteraColors.accentYellow
-                        : HiteraColors.accentBlue;
-
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: HiteraColors.bgCard,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelesai ? HiteraColors.border : HiteraColors.border,
+              ...grouped.entries.expand((entry) {
+                final tanggal = entry.key;
+                final items = entry.value;
+                return [
+                  
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8, top: 4),
+                    child: Text(
+                      formatTanggalID(tanggal),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: HiteraColors.accentBlue,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-                  child: Opacity(
-                    opacity: isSelesai ? 0.6 : 1,
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () async {
-                            final err = await prov.toggleSelesai(t.id, t.status);
-                            if (err != null && mounted) {
-                              if (!context.mounted) return;
-                              HiteraToast.error(context, 'Gagal memperbarui status tugas.');
-                            }
-                          },
-                          child: Container(
-                            width: 24, height: 24,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(6),
-                              color: isSelesai ? HiteraColors.accentGreen : Colors.transparent,
-                              border: Border.all(
-                                color: isSelesai ? HiteraColors.accentGreen : HiteraColors.border,
+                  
+                  ...items.map((t) {
+                    final isSelesai = t.status == 'selesai';
+                    final prioritasColor = t.prioritas == 'tinggi'
+                        ? HiteraColors.accentRed
+                        : t.prioritas == 'sedang'
+                            ? HiteraColors.accentYellow
+                            : HiteraColors.accentBlue;
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: HiteraColors.bgCard,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: HiteraColors.border),
+                      ),
+                      child: Opacity(
+                        opacity: isSelesai ? 0.6 : 1,
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () async {
+                                final err = await prov.toggleSelesai(t.id, t.status);
+                                if (err != null && mounted) {
+                                  if (!context.mounted) return;
+                                  HiteraToast.error(context, context.read<SettingsProvider>().t('failed_update_status'));
+                                }
+                              },
+                              child: Container(
+                                width: 24, height: 24,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(6),
+                                  color: isSelesai ? HiteraColors.accentGreen : Colors.transparent,
+                                  border: Border.all(
+                                    color: isSelesai ? HiteraColors.accentGreen : HiteraColors.border,
+                                  ),
+                                ),
+                                child: isSelesai
+                                    ? const Icon(Icons.check, size: 14, color: HiteraColors.bgPrimary)
+                                    : null,
                               ),
                             ),
-                            child: isSelesai
-                                ? const Icon(Icons.check, size: 14, color: HiteraColors.bgPrimary)
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.judul,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: HiteraColors.textPrimary,
-                                  decoration: isSelesai ? TextDecoration.lineThrough : null,
-                                  decorationColor: HiteraColors.textMuted,
-                                ),
-                              ),
-                              if (t.deskripsi != null && t.deskripsi!.isNotEmpty)
-                                Text(
-                                  t.deskripsi!,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 10, color: HiteraColors.textMuted),
-                                ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          width: 8, height: 8,
-                          decoration: BoxDecoration(shape: BoxShape.circle, color: prioritasColor),
-                        ),
-                        const SizedBox(width: 12),
-                        GestureDetector(
-                          onTap: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (c) => AlertDialog(
-                                backgroundColor: HiteraColors.bgCard,
-                                title: const Text('Hapus tugas ini?',
-                                    style: TextStyle(color: HiteraColors.textPrimary)),
-                                actions: [
-                                  TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Batal')),
-                                  TextButton(
-                                      onPressed: () => Navigator.pop(c, true),
-                                      child: const Text('Hapus', style: TextStyle(color: HiteraColors.accentRed))),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t.judul,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: HiteraColors.textPrimary,
+                                      decoration: isSelesai ? TextDecoration.lineThrough : null,
+                                      decorationColor: HiteraColors.textMuted,
+                                    ),
+                                  ),
+                                  if (t.deskripsi != null && t.deskripsi!.isNotEmpty)
+                                    Text(
+                                      t.deskripsi!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 10, color: HiteraColors.textMuted),
+                                    ),
                                 ],
                               ),
-                            );
-                            if (confirm != true || !mounted) return;
-                            final err = await prov.hapus(t.id);
-                            if (!mounted) return;
-                            if (err == null) {
-                              HiteraToast.success(context, 'Tugas berhasil dihapus.');
-                            } else {
-                              HiteraToast.error(context, 'Gagal menghapus tugas.');
-                            }
-                          },
-                          child: const Icon(Icons.delete_outline, color: HiteraColors.textMuted, size: 18),
+                            ),
+                            Container(
+                              width: 8, height: 8,
+                              decoration: BoxDecoration(shape: BoxShape.circle, color: prioritasColor),
+                            ),
+                            const SizedBox(width: 12),
+                            GestureDetector(
+                              onTap: () async {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (c) => AlertDialog(
+                                    backgroundColor: HiteraColors.bgCard,
+                                    title: Text(settings.t('delete_task_confirm'),
+                                        style: const TextStyle(color: HiteraColors.textPrimary)),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(c, false), child: Text(settings.t('cancel'))),
+                                      TextButton(
+                                          onPressed: () => Navigator.pop(c, true),
+                                          child: Text(settings.t('delete'), style: const TextStyle(color: HiteraColors.accentRed))),
+                                    ],
+                                  ),
+                                );
+                                if (confirm != true || !mounted) return;
+                                final err = await prov.hapus(t.id);
+                                if (!mounted) return;
+                                if (err == null) {
+                                  HiteraToast.success(context, settings.t('task_deleted'));
+                                } else {
+                                  HiteraToast.error(context, settings.t('error'));
+                                }
+                              },
+                              child: const Icon(Icons.delete_outline, color: HiteraColors.textMuted, size: 18),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                );
+                      ),
+                    );
+                  }),
+                ];
               }),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _navButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: HiteraColors.border),
-        ),
-        child: Icon(icon, size: 16, color: HiteraColors.textPrimary),
       ),
     );
   }

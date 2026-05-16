@@ -38,6 +38,8 @@ class KesehatanProvider extends ChangeNotifier {
     required int? airMinum,
     required double? jamTidur,
     required String? catatan,
+    int? olahragaJam,
+    int? olahragaMenit,
   }) async {
     final user = SupabaseService.currentUser;
     if (user == null) return 'User tidak ditemukan';
@@ -48,6 +50,8 @@ class KesehatanProvider extends ChangeNotifier {
         'air_minum': airMinum,
         'jam_tidur': jamTidur,
         'catatan': catatan,
+        'olahraga_jam': olahragaJam ?? 0,
+        'olahraga_menit': olahragaMenit ?? 0,
       });
       await fetch();
       return null;

@@ -32,15 +32,13 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
       if (mounted) {
-        HiteraToast.success(context, 'Login berhasil!');
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushNamedAndRemoveUntil(context, '/loading', (route) => false);
       }
     } catch (e) {
       if (mounted) {
-        HiteraToast.error(context, 'Gagal login. Silakan cek email & password.');
+        HiteraToast.error(context, 'Login failed. Please check email & password.');
+        setState(() => _isLoading = false);
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 

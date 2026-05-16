@@ -71,7 +71,7 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
       vsync: this,
     );
     _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, -1),
+      begin: const Offset(0, 1),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(_controller);
@@ -93,7 +93,7 @@ class _ToastWidgetState extends State<_ToastWidget> with SingleTickerProviderSta
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      top: MediaQuery.of(context).padding.top + 12,
+      bottom: MediaQuery.of(context).padding.bottom + 40,
       left: 16,
       right: 16,
       child: SlideTransition(

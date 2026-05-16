@@ -1,4 +1,18 @@
 import 'package:intl/intl.dart';
+import '../providers/settings_provider.dart';
+
+
+
+
+DateTime nowWIB() {
+  final now = DateTime.now();
+  final utc = now.toUtc();
+  
+  return DateTime(
+    utc.year, utc.month, utc.day,
+    utc.hour + 7, utc.minute, utc.second, utc.millisecond,
+  );
+}
 
 String formatRupiah(double angka) {
   final formatter = NumberFormat.currency(
@@ -28,7 +42,7 @@ String formatTanggalSingkat(String tanggal) {
 }
 
 String hariIni() {
-  return DateFormat('yyyy-MM-dd').format(DateTime.now());
+  return DateFormat('yyyy-MM-dd').format(nowWIB());
 }
 
 String tambahHari(String tanggal, int jumlah) {
@@ -36,18 +50,18 @@ String tambahHari(String tanggal, int jumlah) {
   return DateFormat('yyyy-MM-dd').format(date);
 }
 
-String getGreeting() {
+String getGreeting(SettingsProvider settings) {
   final hour = DateTime.now().hour;
-  if (hour < 11) return 'Selamat Pagi';
-  if (hour < 15) return 'Selamat Siang';
-  if (hour < 18) return 'Selamat Sore';
-  return 'Selamat Malam';
+  if (hour < 12) return settings.t('greeting_morning');
+  if (hour < 15) return settings.t('greeting_afternoon');
+  if (hour < 18) return settings.t('greeting_evening');
+  return settings.t('greeting_night');
 }
 
 String formatWaktu(String isoDate) {
   try {
     final date = DateTime.parse(isoDate);
-    return DateFormat('HH:mm').format(date);
+    return DateFormat('HH:mm - d MMM yyyy', 'id_ID').format(date);
   } catch (_) {
     return '';
   }

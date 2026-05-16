@@ -6,16 +6,11 @@ import '../utils/utils.dart';
 
 class KeseharianProvider extends ChangeNotifier {
   List<KeseharianTodo> _todos = [];
-  String _jurnal = '';
   bool _loading = true;
-  bool _savingJurnal = false;
   String _tanggal = hariIni();
-  Timer? _debounceTimer;
 
   List<KeseharianTodo> get todos => _todos;
-  String get jurnal => _jurnal;
   bool get loading => _loading;
-  bool get savingJurnal => _savingJurnal;
   String get tanggal => _tanggal;
 
   void setTanggal(String t) {
@@ -31,12 +26,8 @@ class KeseharianProvider extends ChangeNotifier {
     try {
       final todoData = await SupabaseService.fetchKeseharianTodos(user.id, _tanggal);
       _todos = todoData.map((e) => KeseharianTodo.fromJson(e)).toList();
-
-      final jurnalContent = await SupabaseService.fetchKeseharianJurnal(user.id, _tanggal);
-      _jurnal = jurnalContent ?? '';
     } catch (_) {
       _todos = [];
-      _jurnal = '';
     }
     _loading = false;
     notifyListeners();
@@ -78,34 +69,5 @@ class KeseharianProvider extends ChangeNotifier {
     }
   }
 
-  /// Debounced journal save - matches website's 1.5s debounce
-  void updateJurnal(String content) {
-    _jurnal = content;
-    notifyListeners();
 
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
-      _saveJurnal(content);
-    });
-  }
-
-  Future<void> _saveJurnal(String content) async {
-    final user = SupabaseService.currentUser;
-    if (user == null) return;
-    _savingJurnal = true;
-    notifyListeners();
-    try {
-      await SupabaseService.saveKeseharianJurnal(user.id, _tanggal, content);
-    } catch (_) {
-      // Silent fail like website
-    }
-    _savingJurnal = false;
-    notifyListeners();
-  }
-
-  @override
-  void dispose() {
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
 }

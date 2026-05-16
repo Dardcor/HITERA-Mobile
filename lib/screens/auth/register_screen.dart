@@ -46,15 +46,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _namaController.text.trim(),
       );
       if (mounted) {
-        HiteraToast.success(context, 'Registrasi berhasil! Menyiapkan dashboard...');
-        Navigator.pushReplacementNamed(context, '/dashboard');
+        Navigator.pushNamedAndRemoveUntil(context, '/loading', (route) => false);
       }
     } catch (e) {
       if (mounted) {
-        HiteraToast.error(context, 'Gagal registrasi.');
+        HiteraToast.error(context, 'Registration failed.');
+        setState(() => _isLoading = false);
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 

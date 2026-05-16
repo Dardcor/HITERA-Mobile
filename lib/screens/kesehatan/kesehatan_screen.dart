@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../models/models.dart';
 import '../../providers/kesehatan_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/utils.dart';
 import '../../widgets/toast.dart';
@@ -32,12 +33,10 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
     if (user == null) return;
     setState(() => _historyLoading = true);
     try {
-      final now = DateTime.now();
-      final from = now.subtract(const Duration(days: 7));
       _recentHistory = await SupabaseService.fetchKesehatanHistory(
         userId: user.id,
-        fromDate: from.toIso8601String().split('T').first,
-        toDate: now.toIso8601String().split('T').first,
+        fromDate: tambahHari(hariIni(), -7),
+        toDate: hariIni(),
       );
     } catch (_) {
       _recentHistory = [];
@@ -45,13 +44,15 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
     if (mounted) setState(() => _historyLoading = false);
   }
 
-  void _showFormModal() {
+  void _showFormModal(SettingsProvider settings) {
     final prov = context.read<KesehatanProvider>();
     final data = prov.data;
 
     final jamTidurCtrl = TextEditingController(text: data?.jamTidur?.toString() ?? '');
     final catatanCtrl = TextEditingController(text: data?.catatan ?? '');
     int airMinum = data?.airMinum ?? 0;
+    int olahragaJam = data?.olahragaJam ?? 0;
+    int olahragaMenit = data?.olahragaMenit ?? 0;
     bool isSubmitting = false;
 
     showModalBottomSheet(
@@ -75,7 +76,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(data != null ? 'Edit Data Kesehatan' : 'Isi Data Kesehatan',
+                    Text(data != null ? settings.t('edit') : settings.t('save_data'),
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
                     GestureDetector(
                       onTap: () => Navigator.pop(ctx),
@@ -84,7 +85,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _label('Air Minum (Gelas 250ml)'),
+                _label('${settings.t('water_intake')} (250ml)'),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -105,7 +106,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                             text: TextSpan(
                               children: [
                                 TextSpan(text: '$airMinum ', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
-                                const TextSpan(text: 'Gelas', style: TextStyle(fontSize: 12, color: HiteraColors.textMuted)),
+                                TextSpan(text: settings.t('glasses'), style: const TextStyle(fontSize: 12, color: HiteraColors.textMuted)),
                               ],
                             ),
                           ),
@@ -119,29 +120,109 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                _field('Jam Tidur (jam)', jamTidurCtrl, 'number', '7.5'),
+                _field('${settings.t('sleep_hours')} (${settings.t('hours').toLowerCase()})', jamTidurCtrl, 'number', '7.5'),
                 const SizedBox(height: 16),
-                _label('Catatan Hari Ini'),
+                _label(settings.t('exercise_duration')),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: HiteraColors.bgSecondary,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: HiteraColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove, color: HiteraColors.textSecondary, size: 18),
+                              onPressed: () => setModalState(() => olahragaJam = (olahragaJam - 1).clamp(0, 24)),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: RichText(
+                                  text: TextSpan(children: [
+                                    TextSpan(text: '$olahragaJam ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
+                                    TextSpan(text: settings.t('hours'), style: const TextStyle(fontSize: 10, color: HiteraColors.textMuted)),
+                                  ]),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add, color: HiteraColors.textSecondary, size: 18),
+                              onPressed: () => setModalState(() => olahragaJam = (olahragaJam + 1).clamp(0, 24)),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: HiteraColors.bgSecondary,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: HiteraColors.border),
+                        ),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove, color: HiteraColors.textSecondary, size: 18),
+                              onPressed: () => setModalState(() => olahragaMenit = (olahragaMenit - 5).clamp(0, 55)),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                            Expanded(
+                              child: Center(
+                                child: RichText(
+                                  text: TextSpan(children: [
+                                    TextSpan(text: '$olahragaMenit ', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
+                                    TextSpan(text: settings.t('minutes'), style: const TextStyle(fontSize: 10, color: HiteraColors.textMuted)),
+                                  ]),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.add, color: HiteraColors.textSecondary, size: 18),
+                              onPressed: () => setModalState(() => olahragaMenit = (olahragaMenit + 5).clamp(0, 55)),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _label(settings.t('notes')),
                 const SizedBox(height: 6),
                 TextField(
                   controller: catatanCtrl,
                   maxLines: 3,
                   style: const TextStyle(color: HiteraColors.textPrimary, fontSize: 14),
-                  decoration: const InputDecoration(hintText: 'Bagaimana perasaanmu hari ini?'),
+                  decoration: InputDecoration(hintText: settings.t('how_feeling')),
                 ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: HiteraColors.textSecondary,
-                        side: const BorderSide(color: HiteraColors.border),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: HiteraColors.textSecondary,
+                          side: const BorderSide(color: HiteraColors.border),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: Text(settings.t('cancel')),
                       ),
-                      child: const Text('Batal'),
-                    ),
                     const SizedBox(width: 12),
                     isSubmitting
                       ? Container(
@@ -150,15 +231,15 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                             color: HiteraColors.accentBlue.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SizedBox(
+                              const SizedBox(
                                 width: 16, height: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                               ),
-                              SizedBox(width: 8),
-                              Text('Menyimpan...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                              const SizedBox(width: 8),
+                              Text('${settings.t('loading')}...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
                             ],
                           ),
                         )
@@ -169,18 +250,20 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                           airMinum: airMinum,
                           jamTidur: double.tryParse(jamTidurCtrl.text),
                           catatan: catatanCtrl.text.isNotEmpty ? catatanCtrl.text : null,
+                          olahragaJam: olahragaJam,
+                          olahragaMenit: olahragaMenit,
                         );
                         if (ctx.mounted) {
                           setModalState(() => isSubmitting = false);
                           Navigator.pop(ctx);
                         }
                         if (mounted) {
-                          if (err == null) {
-                            HiteraToast.success(context, 'Data kesehatan berhasil disimpan.');
-                            _fetchRecentHistory();
-                          } else {
-                            HiteraToast.error(context, 'Gagal menyimpan data kesehatan.');
-                          }
+                            if (err == null) {
+                              HiteraToast.success(context, settings.t('success'));
+                              _fetchRecentHistory();
+                            } else {
+                              HiteraToast.error(context, settings.t('error'));
+                            }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -188,7 +271,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                         foregroundColor: HiteraColors.bgPrimary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Simpan Data', style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: Text(settings.t('save_data'), style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
@@ -226,6 +309,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<KesehatanProvider>();
+    final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
       backgroundColor: HiteraColors.bgPrimary,
@@ -233,8 +317,8 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Kesehatan Harian',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
+            Text(settings.t('health_today'),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
             const SizedBox(height: 4),
             Row(
               children: [
@@ -251,7 +335,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
         actions: [
           IconButton(
             icon: Icon(prov.data != null ? Icons.edit : Icons.add_rounded, color: HiteraColors.accentBlue),
-            onPressed: _showFormModal,
+            onPressed: () => _showFormModal(settings),
           ),
         ],
       ),
@@ -280,27 +364,27 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                       child: const Icon(Icons.favorite_rounded, color: HiteraColors.accentBlue, size: 36),
                     ),
                     const SizedBox(height: 20),
-                    const Text('Data Belum Diisi',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
+                    Text(settings.t('data_not_filled'),
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
                     const SizedBox(height: 8),
-                    const Text('Catat perkembangan kesehatan Anda hari ini.',
-                        style: TextStyle(fontSize: 14, color: HiteraColors.textSecondary)),
+                    Text(settings.t('record_health_today'),
+                        style: const TextStyle(fontSize: 14, color: HiteraColors.textSecondary)),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: _showFormModal,
+                      onPressed: () => _showFormModal(context.read<SettingsProvider>()),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HiteraColors.accentBlue,
                         foregroundColor: HiteraColors.bgPrimary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                       ),
-                      child: const Text('Isi Data Kesehatan', style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: Text(settings.t('fill_health_data'), style: const TextStyle(fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),
               )
             else ...[
-              // Metrics grid
+              
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
@@ -309,9 +393,10 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                 mainAxisSpacing: 10,
                 childAspectRatio: 1.6,
                 children: [
-                  _metrikCard(Icons.water_drop, Colors.cyan, 'Air Minum', '${prov.data?.airMinum ?? '-'}', 'gelas'),
-                  _metrikCard(Icons.nightlight_round, Colors.indigo, 'Jam Tidur', '${prov.data?.jamTidur ?? '-'}', 'jam'),
-                  _catatanCard(prov.data?.catatan),
+                  _metrikCard(Icons.water_drop, Colors.cyan, settings.t('water_intake'), '${prov.data?.airMinum ?? '-'}', settings.t('glasses')),
+                  _metrikCard(Icons.nightlight_round, Colors.indigo, settings.t('sleep_hours'), '${prov.data?.jamTidur ?? '-'}', settings.t('hours').toLowerCase()),
+                  _metrikCard(Icons.fitness_center, Colors.orange, settings.t('exercise_duration'), '${prov.data?.olahragaJam ?? 0}${settings.t('hour_short')} ${prov.data?.olahragaMenit ?? 0}${settings.t('minute_short')}', ''),
+                  _catatanCard(prov.data?.catatan, settings),
                 ],
               ),
             ],
@@ -319,12 +404,12 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('RIWAYAT 7 HARI TERAKHIR',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary, letterSpacing: 1.5)),
+                Text(settings.t('last_7_days'),
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary, letterSpacing: 1.5)),
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/kesehatan-history'),
-                  child: const Text('Lihat Semua',
-                      style: TextStyle(fontSize: 12, color: HiteraColors.accentBlue, fontWeight: FontWeight.w700)),
+                  child: Text(settings.t('see_all'),
+                      style: const TextStyle(fontSize: 12, color: HiteraColors.accentBlue, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
@@ -342,8 +427,8 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: HiteraColors.border),
                 ),
-                child: const Text(
-                  'Belum ada riwayat kesehatan.',
+                child: Text(
+                  settings.t('no_health_history'),
                   style: TextStyle(fontSize: 14, color: HiteraColors.textMuted, fontStyle: FontStyle.italic),
                 ),
               )
@@ -366,8 +451,9 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                       spacing: 20,
                       runSpacing: 8,
                       children: [
-                        _stat('Air', '${h.airMinum ?? '-'} gls'),
-                        _stat('Tidur', '${h.jamTidur ?? '-'} jam'),
+                        _stat(settings.t('water_short'), '${h.airMinum ?? '-'} gls'),
+                        _stat(settings.t('sleep_short'), '${h.jamTidur ?? '-'} ${settings.t('hours').toLowerCase()}'),
+                        _stat(settings.t('exercise_short'), '${h.olahragaJam ?? 0}${settings.t('hour_short')} ${h.olahragaMenit ?? 0}${settings.t('minute_short')}'),
                       ],
                     ),
                     if (h.catatan != null && h.catatan!.isNotEmpty) ...[
@@ -459,7 +545,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
     );
   }
 
-  Widget _catatanCard(String? catatan) {
+  Widget _catatanCard(String? catatan, SettingsProvider settings) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -482,7 +568,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('CATATAN', style: TextStyle(fontSize: 9, color: HiteraColors.textMuted, fontWeight: FontWeight.w700, letterSpacing: 1)),
+              Text(settings.t('notes_label'), style: const TextStyle(fontSize: 9, color: HiteraColors.textMuted, fontWeight: FontWeight.w700, letterSpacing: 1)),
               Text(catatan ?? '-',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

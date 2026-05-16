@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/keuangan_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../utils/utils.dart';
 import '../../widgets/toast.dart';
 
@@ -21,7 +22,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
     });
   }
 
-  void _showAddModal() {
+  void _showAddModal(SettingsProvider settings) {
     String jenis = 'pengeluaran';
     final jumlahCtrl = TextEditingController();
     String kategori = '';
@@ -59,8 +60,8 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Tambah Transaksi',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
+                      Text(settings.t('add_transaction'),
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
                       GestureDetector(
                         onTap: () => Navigator.pop(ctx),
                         child: const Icon(Icons.close, color: HiteraColors.textMuted, size: 22),
@@ -87,7 +88,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Center(
-                                child: Text('Pemasukan',
+                                child: Text(settings.t('type_income'),
                                     style: TextStyle(
                                       fontSize: 13, fontWeight: FontWeight.w700,
                                       color: jenis == 'pemasukan' ? HiteraColors.bgPrimary : HiteraColors.textMuted,
@@ -106,7 +107,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Center(
-                                child: Text('Pengeluaran',
+                                child: Text(settings.t('type_expense'),
                                     style: TextStyle(
                                       fontSize: 13, fontWeight: FontWeight.w700,
                                       color: jenis == 'pengeluaran' ? Colors.white : HiteraColors.textMuted,
@@ -119,7 +120,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _label('Jumlah (Rp)'),
+                  _label('${settings.t('amount')} (Rp)'),
                   const SizedBox(height: 6),
                   TextField(
                     controller: jumlahCtrl,
@@ -128,7 +129,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                     decoration: const InputDecoration(hintText: '0'),
                   ),
                   const SizedBox(height: 16),
-                  _label('Kategori'),
+                  _label(settings.t('category')),
                   const SizedBox(height: 6),
                   Container(
                     width: double.infinity,
@@ -149,7 +150,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _label('Tanggal'),
+                  _label(settings.t('date')),
                   const SizedBox(height: 6),
                   GestureDetector(
                     onTap: () async {
@@ -178,27 +179,27 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  _label('Deskripsi (Opsional)'),
+                  _label(settings.t('description')),
                   const SizedBox(height: 6),
                   TextField(
                     controller: deskripsiCtrl,
                     maxLines: 3,
                     style: const TextStyle(color: HiteraColors.textPrimary, fontSize: 14),
-                    decoration: const InputDecoration(hintText: 'Contoh: Makan siang di kantor'),
+                    decoration: const InputDecoration(hintText: ''),
                   ),
                   const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: HiteraColors.textSecondary,
-                          side: const BorderSide(color: HiteraColors.border),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: HiteraColors.textSecondary,
+                            side: const BorderSide(color: HiteraColors.border),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: Text(settings.t('cancel')),
                         ),
-                        child: const Text('Batal'),
-                      ),
                       const SizedBox(width: 12),
                       isSubmitting
                         ? Container(
@@ -207,15 +208,15 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                               color: HiteraColors.accentBlue.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                SizedBox(
+                                const SizedBox(
                                   width: 16, height: 16,
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 ),
-                                SizedBox(width: 8),
-                                Text('Menyimpan...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+                                const SizedBox(width: 8),
+                                Text('${settings.t('loading')}...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
                               ],
                             ),
                           )
@@ -236,11 +237,11 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                             Navigator.pop(ctx);
                           }
                           if (mounted) {
-                            if (err == null) {
-                              HiteraToast.success(context, 'Transaksi berhasil ditambahkan.');
-                            } else {
-                              HiteraToast.error(context, 'Gagal menambahkan transaksi.');
-                            }
+                              if (err == null) {
+                                HiteraToast.success(context, settings.t('transaction_added'));
+                              } else {
+                                HiteraToast.error(context, settings.t('error'));
+                              }
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -248,7 +249,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                           foregroundColor: HiteraColors.bgPrimary,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        child: const Text('Simpan', style: TextStyle(fontWeight: FontWeight.w600)),
+                          child: Text(settings.t('save'), style: const TextStyle(fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -272,6 +273,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<KeuanganProvider>();
+    final settings = context.watch<SettingsProvider>();
 
     return Scaffold(
       backgroundColor: HiteraColors.bgPrimary,
@@ -279,8 +281,8 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Keuangan Harian',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
+            Text(settings.t('finance'),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
             const SizedBox(height: 4),
             Row(
               children: [
@@ -302,7 +304,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add_rounded, color: HiteraColors.accentBlue),
-            onPressed: _showAddModal,
+            onPressed: () => _showAddModal(settings),
           ),
         ],
       ),
@@ -312,26 +314,26 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Summary cards
-            _summaryTile('SALDO ANDA SEKARANG', prov.totalSaldo, HiteraColors.accentBlue, Icons.account_balance_wallet, prov.loading),
+            
+            _summaryTile(settings.t('balance_now').toUpperCase(), prov.totalSaldo, HiteraColors.accentBlue, Icons.account_balance_wallet, prov.loading),
             const SizedBox(height: 8),
             Row(
               children: [
-                Expanded(child: _summaryTile('TOTAL PEMASUKAN', prov.totalPemasukan, HiteraColors.accentGreen, Icons.trending_up, prov.loading)),
+                Expanded(child: _summaryTile(settings.t('income').toUpperCase(), prov.totalPemasukan, HiteraColors.accentGreen, Icons.trending_up, prov.loading)),
                 const SizedBox(width: 8),
-                Expanded(child: _summaryTile('TOTAL PENGELUARAN', prov.totalPengeluaran, HiteraColors.accentRed, Icons.trending_down, prov.loading)),
+                Expanded(child: _summaryTile(settings.t('expense').toUpperCase(), prov.totalPengeluaran, HiteraColors.accentRed, Icons.trending_down, prov.loading)),
               ],
             ),
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('TRANSAKSI HARI INI',
+                const Text('TRANSAKSI',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary, letterSpacing: 1.5)),
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/keuangan-history'),
-                  child: const Text('Lihat Semua History',
-                      style: TextStyle(fontSize: 12, color: HiteraColors.accentBlue, fontWeight: FontWeight.w700)),
+                  child: Text(settings.t('see_all_history'),
+                      style: const TextStyle(fontSize: 12, color: HiteraColors.accentBlue, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
@@ -366,12 +368,12 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                       child: const Icon(Icons.account_balance_wallet, color: HiteraColors.textMuted, size: 32),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Tidak ada transaksi pada tanggal ini.',
-                        style: TextStyle(color: HiteraColors.textMuted, fontStyle: FontStyle.italic)),
+                    Text(settings.t('no_transactions'),
+                        style: const TextStyle(color: HiteraColors.textMuted, fontStyle: FontStyle.italic)),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: _showAddModal,
-                      child: const Text('Tambah sekarang', style: TextStyle(color: HiteraColors.textSecondary)),
+                      onPressed: () => _showAddModal(context.read<SettingsProvider>()),
+                      child: Text(settings.t('add_now'), style: const TextStyle(color: HiteraColors.textSecondary)),
                     ),
                   ],
                 ),
@@ -408,7 +410,7 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                           children: [
                             Text(t.kategori,
                                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: HiteraColors.textPrimary)),
-                            Text(t.deskripsi ?? 'Tidak ada deskripsi',
+                            Text(t.deskripsi ?? settings.t('no_desc'),
                                 style: const TextStyle(fontSize: 10, color: HiteraColors.textMuted, letterSpacing: 0.5)),
                           ],
                         ),
@@ -439,21 +441,21 @@ class _KeuanganScreenState extends State<KeuanganScreen> {
                             context: context,
                             builder: (c) => AlertDialog(
                               backgroundColor: HiteraColors.bgCard,
-                              title: const Text('Hapus transaksi ini?', style: TextStyle(color: HiteraColors.textPrimary)),
+                              title: Text(settings.t('delete_transaction_confirm'), style: const TextStyle(color: HiteraColors.textPrimary)),
                               actions: [
-                                TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Batal')),
-                                TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('Hapus', style: TextStyle(color: HiteraColors.accentRed))),
+                                TextButton(onPressed: () => Navigator.pop(c, false), child: Text(settings.t('cancel'))),
+                                TextButton(onPressed: () => Navigator.pop(c, true), child: Text(settings.t('delete'), style: const TextStyle(color: HiteraColors.accentRed))),
                               ],
                             ),
                           );
                           if (confirm != true || !mounted) return;
                           final err = await prov.hapus(t.id);
                           if (!mounted) return;
-                          if (err == null) {
-                            HiteraToast.success(context, 'Transaksi berhasil dihapus.');
-                          } else {
-                            HiteraToast.error(context, 'Gagal menghapus transaksi.');
-                          }
+                              if (err == null) {
+                                HiteraToast.success(context, settings.t('transaction_deleted'));
+                              } else {
+                                HiteraToast.error(context, settings.t('error'));
+                              }
                         },
                         child: const Icon(Icons.delete_outline, color: HiteraColors.textMuted, size: 18),
                       ),
