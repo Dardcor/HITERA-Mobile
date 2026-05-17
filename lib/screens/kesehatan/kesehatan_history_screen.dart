@@ -87,6 +87,7 @@ class _KesehatanHistoryScreenState extends State<KesehatanHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
     return Scaffold(
       backgroundColor: HiteraColors.bgPrimary,
       appBar: AppBar(
@@ -184,15 +185,16 @@ class _KesehatanHistoryScreenState extends State<KesehatanHistoryScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(formatTanggalID(h.tanggal),
+                  Text(formatWaktu(h.createdAt),
                       style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: HiteraColors.accentBlue)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 20,
                     runSpacing: 8,
                     children: [
-                      _stat('Air', '${h.airMinum ?? '-'} gls'),
-                      _stat('Tidur', '${h.jamTidur ?? '-'} jam'),
+                      _stat(settings.t('water_short'), '${h.airMinum ?? '-'} gls'),
+                      _stat(settings.t('sleep_short'), '${h.jamTidur ?? '-'} ${settings.t('hours').toLowerCase()}'),
+                      _stat(settings.t('exercise_short'), '${h.olahragaJam ?? 0}${settings.t('hour_short')} ${h.olahragaMenit ?? 0}${settings.t('minute_short')}'),
                     ],
                   ),
                   if (h.catatan != null && h.catatan!.isNotEmpty) ...[

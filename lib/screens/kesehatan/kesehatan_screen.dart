@@ -35,7 +35,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
     try {
       _recentHistory = await SupabaseService.fetchKesehatanHistory(
         userId: user.id,
-        fromDate: tambahHari(hariIni(), -7),
+        fromDate: '2020-01-01',
         toDate: hariIni(),
       );
     } catch (_) {
@@ -444,7 +444,7 @@ class _KesehatanScreenState extends State<KesehatanScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(formatTanggalID(h.tanggal),
+                    Text(formatWaktu(h.createdAt),
                         style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: HiteraColors.accentBlue)),
                     const SizedBox(height: 12),
                     Wrap(

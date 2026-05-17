@@ -6,6 +6,7 @@ import '../../providers/settings_provider.dart';
 
 import 'profil_screen.dart';
 import 'notifikasi_screen.dart';
+import 'lokasi_screen.dart';
 import 'kontrol_data_screen.dart';
 import 'bahasa_screen.dart';
 
@@ -127,6 +128,12 @@ class PengaturanScreen extends StatelessWidget {
                   icon: Icons.notifications_none_rounded,
                   title: settings.t('notifications'),
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotifikasiScreen())),
+                ),
+                _buildMenuItem(
+                  context,
+                  icon: Icons.location_on_outlined,
+                  title: 'Lokasi',
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LokasiScreen())),
                 ),
                 _buildMenuItem(
                   context,

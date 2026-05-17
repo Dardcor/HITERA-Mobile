@@ -58,9 +58,16 @@ String getGreeting(SettingsProvider settings) {
   return settings.t('greeting_night');
 }
 
+DateTime parseUtcToLocal(String isoDate) {
+  if (!isoDate.endsWith('Z') && !isoDate.contains('+')) {
+    isoDate += 'Z';
+  }
+  return DateTime.parse(isoDate).toLocal();
+}
+
 String formatWaktu(String isoDate) {
   try {
-    final date = DateTime.parse(isoDate);
+    final date = parseUtcToLocal(isoDate);
     return DateFormat('HH:mm - d MMM yyyy', 'id_ID').format(date);
   } catch (_) {
     return '';

@@ -111,13 +111,18 @@ class _TugasScreenState extends State<TugasScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    deadline != null ? formatTanggalID(deadline!) : 'Pilih tanggal',
-                                    style: TextStyle(
-                                      color: deadline != null ? HiteraColors.textPrimary : HiteraColors.textMuted,
-                                      fontSize: 14,
+                                  Expanded(
+                                    child: Text(
+                                      deadline != null ? formatTanggalID(deadline!) : 'Pilih tanggal',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        color: deadline != null ? HiteraColors.textPrimary : HiteraColors.textMuted,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   if (deadline != null)
                                     GestureDetector(
                                       onTap: () => setModalState(() => deadline = null),
@@ -163,13 +168,18 @@ class _TugasScreenState extends State<TugasScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    waktuDeadline ?? 'Pilih jam',
-                                    style: TextStyle(
-                                      color: waktuDeadline != null ? HiteraColors.textPrimary : HiteraColors.textMuted,
-                                      fontSize: 14,
+                                  Expanded(
+                                    child: Text(
+                                      waktuDeadline ?? 'Pilih jam',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        color: waktuDeadline != null ? HiteraColors.textPrimary : HiteraColors.textMuted,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   if (waktuDeadline != null)
                                     GestureDetector(
                                       onTap: () => setModalState(() => waktuDeadline = null),
@@ -506,13 +516,26 @@ class _TugasScreenState extends State<TugasScreen> {
                                       decorationColor: HiteraColors.textMuted,
                                     ),
                                   ),
-                                  if (t.deskripsi != null && t.deskripsi!.isNotEmpty)
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.schedule, size: 10, color: HiteraColors.textMuted),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Dibuat: ${formatWaktu(t.createdAt)}',
+                                        style: const TextStyle(fontSize: 10, color: HiteraColors.textMuted, fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                  if (t.deskripsi != null && t.deskripsi!.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
                                     Text(
                                       t.deskripsi!,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(fontSize: 10, color: HiteraColors.textMuted),
                                     ),
+                                  ],
                                 ],
                               ),
                             ),

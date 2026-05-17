@@ -14,7 +14,7 @@ class HiteraColors {
   static const textSecondary = Color(0xFF8888AA);
   static const textMuted = Color(0xFF555570);
 
-  static const bgPrimaryLight = Color(0xFFF8F9FA);
+  static const bgPrimaryLight = Color(0xFFE5E7EB);
   static const bgSecondaryLight = Color(0xFFFFFFFF);
   static const bgCardLight = Color(0xFFFFFFFF);
   static const bgCardHoverLight = Color(0xFFF1F3F5);
@@ -34,6 +34,8 @@ class HiteraColors {
   static const accentYellow = Color(0xFFFFD60A);
   static Color accentYellowDim =
       const Color(0xFFFFD60A).withValues(alpha: 0.12);
+  
+  static const success = Color(0xFF00E676);
 }
 
 class HiteraTheme {

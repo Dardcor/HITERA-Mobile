@@ -21,6 +21,8 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _hasUnread = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +46,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final activeTasks = tasks.where((t) => t.status == 'aktif').toList();
     
     await NotificationService.generateDailyHistoryAndSpam(user.id, data, activeTasks);
+
+    // Cek unread notifications
+    try {
+      final res = await SupabaseService.client
+          .from('notifikasi_history')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('is_read', false)
+          .limit(1);
+      
+      if (mounted) {
+        setState(() {
+          _hasUnread = res.isNotEmpty;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -82,9 +100,31 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded, color: HiteraColors.textPrimary),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RiwayatNotifikasiScreen())),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none_rounded, color: HiteraColors.textPrimary),
+                onPressed: () async {
+                  await Navigator.push(context, MaterialPageRoute(builder: (_) => const RiwayatNotifikasiScreen()));
+                  _checkNotifications(); // Refresh read status
+                },
+              ),
+              if (_hasUnread)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: HiteraColors.bgPrimary, width: 2),
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 8),
         ],

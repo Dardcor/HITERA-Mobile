@@ -16,7 +16,7 @@ class NotificationService {
     );
     const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
 
-    await _notificationsPlugin.initialize(initSettings);
+    await _notificationsPlugin.initialize(settings: initSettings);
     await requestPermissions();
   }
 
@@ -34,11 +34,11 @@ class NotificationService {
     required TimeOfDay time,
   }) async {
     await _notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      _nextInstanceOfTime(time),
-      const NotificationDetails(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: _nextInstanceOfTime(time),
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'hitera_reminders',
           'Pengingat Hitera',
@@ -53,14 +53,13 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
   static Future<void> cancelNotification(int id) async {
-    await _notificationsPlugin.cancel(id);
+    await _notificationsPlugin.cancel(id: id);
   }
 
   static Future<void> cancelAllNotifications() async {
@@ -79,11 +78,11 @@ class NotificationService {
 
   static Future<void> scheduleRepeatingSpam(int id, String title, String body) async {
     await _notificationsPlugin.periodicallyShow(
-      id,
-      title,
-      body,
-      RepeatInterval.everyMinute, 
-      const NotificationDetails(
+      id: id,
+      title: title,
+      body: body,
+      repeatInterval: RepeatInterval.everyMinute, 
+      notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'hitera_spam',
           'Peringatan Deadline',
@@ -98,7 +97,7 @@ class NotificationService {
   }
 
   static Future<void> stopSpam(int id) async {
-    await _notificationsPlugin.cancel(id);
+    await _notificationsPlugin.cancel(id: id);
   }
 
   static Future<void> generateDailyHistoryAndSpam(String userId, Map<String, dynamic> settings, List<dynamic> activeTasks) async {

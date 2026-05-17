@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/supabase_service.dart';
+import '../../utils/utils.dart';
 import 'package:intl/intl.dart';
 
 class RiwayatNotifikasiScreen extends StatefulWidget {
@@ -115,7 +116,7 @@ class _RiwayatNotifikasiScreenState extends State<RiwayatNotifikasiScreen> {
                     final notif = _notifications[index];
                     final isRead = notif['is_read'] as bool;
                     final tipe = notif['tipe'] as String;
-                    final date = DateTime.parse(notif['created_at']).toLocal();
+                    final date = parseUtcToLocal(notif['created_at']);
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -148,7 +149,7 @@ class _RiwayatNotifikasiScreenState extends State<RiwayatNotifikasiScreen> {
                                       ),
                                     ),
                                     Text(
-                                      DateFormat('dd MMM HH:mm').format(date),
+                                      DateFormat('HH:mm - d MMMM yyyy', 'id_ID').format(date),
                                       style: const TextStyle(fontSize: 11, color: HiteraColors.textMuted),
                                     ),
                                   ],

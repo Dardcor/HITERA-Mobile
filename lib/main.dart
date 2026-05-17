@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz_env;
+import 'package:flutter_timezone/flutter_timezone.dart';
 
 import 'config/theme.dart';
 import 'providers/auth_provider.dart';
@@ -13,6 +15,7 @@ import 'providers/kesehatan_provider.dart';
 import 'providers/tugas_provider.dart';
 import 'providers/settings_provider.dart';
 import 'services/notification_service.dart';
+import 'services/sync_service.dart';
 
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/landing_screen.dart';
@@ -33,6 +36,12 @@ void main() async {
 
   await initializeDateFormatting('id_ID', null);
   tz.initializeTimeZones();
+  try {
+    final tzInfo = await FlutterTimezone.getLocalTimezone();
+    tz_env.setLocalLocation(tz_env.getLocation(tzInfo.identifier));
+  } catch (e) {
+    debugPrint('Could not get local timezone: $e');
+  }
   await NotificationService.initialize();
 
   await Supabase.initialize(
@@ -66,6 +75,7 @@ class HiteraApp extends StatelessWidget {
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           return MaterialApp(
+            scaffoldMessengerKey: SyncService.scaffoldMessengerKey,
             title: 'HITERA',
             debugShowCheckedModeBanner: false,
             theme: HiteraTheme.lightTheme,
@@ -104,7 +114,7 @@ class _AuthGateState extends State<_AuthGate> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 5), () {
       if (mounted) setState(() => _showSplash = false);
     });
   }

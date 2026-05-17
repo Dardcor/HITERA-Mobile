@@ -70,6 +70,9 @@ class SupabaseService {
   }
 
   static Future<void> hapusTransaksi(String id) {
+    if (id.trim().isEmpty || id == 'null' || id == 'undefined') {
+      return Future.value();
+    }
     return client.from('transaksi').delete().eq('id', id);
   }
 
@@ -162,14 +165,20 @@ class SupabaseService {
   }
 
   static Future<void> toggleTugasStatus(String id, String currentStatus) {
+    if (id.trim().isEmpty || id == 'null' || id == 'undefined') {
+      return Future.value();
+    }
     final newStatus = currentStatus == 'selesai' ? 'aktif' : 'selesai';
     return client.from('tugas').update({
       'status': newStatus,
-      'tanggal_selesai': newStatus == 'selesai' ? DateTime.now().toIso8601String() : null,
+      'tanggal_selesai': newStatus == 'selesai' ? DateTime.now().toUtc().toIso8601String() : null,
     }).eq('id', id);
   }
 
   static Future<void> deleteTugas(String id) {
+    if (id.trim().isEmpty || id == 'null' || id == 'undefined') {
+      return Future.value();
+    }
     return client.from('tugas').delete().eq('id', id);
   }
 
@@ -189,10 +198,16 @@ class SupabaseService {
   }
 
   static Future<void> toggleKeseharianTodo(String id, bool currentStatus) {
+    if (id.trim().isEmpty || id == 'null' || id == 'undefined') {
+      return Future.value();
+    }
     return client.from('keseharian_todos').update({'is_done': !currentStatus}).eq('id', id);
   }
 
   static Future<void> deleteKeseharianTodo(String id) {
+    if (id.trim().isEmpty || id == 'null' || id == 'undefined') {
+      return Future.value();
+    }
     return client.from('keseharian_todos').delete().eq('id', id);
   }
 
@@ -212,7 +227,7 @@ class SupabaseService {
 
   static Future<void> updateUserSettings(String userId, Map<String, dynamic> updates) {
     updates['user_id'] = userId;
-    updates['updated_at'] = DateTime.now().toIso8601String();
+    updates['updated_at'] = DateTime.now().toUtc().toIso8601String();
     return client.from('user_settings').upsert(updates, onConflict: 'user_id');
   }
 
@@ -242,7 +257,7 @@ class SupabaseService {
       'id': userId,
       'username': username,
       'full_name': fullName,
-      'updated_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
     });
   }
 

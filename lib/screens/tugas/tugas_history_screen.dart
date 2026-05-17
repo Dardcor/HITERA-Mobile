@@ -301,8 +301,24 @@ class _TugasHistoryScreenState extends State<TugasHistoryScreen> {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const SizedBox(width: 20),
+                                const Icon(Icons.schedule, size: 12, color: HiteraColors.textMuted),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Dibuat: ${formatWaktu(t.createdAt)}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: HiteraColors.textMuted,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                             if (t.deadline != null) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 4),
                               Row(
                                 children: [
                                   const SizedBox(width: 20),

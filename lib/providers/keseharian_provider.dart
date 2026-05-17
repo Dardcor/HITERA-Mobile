@@ -50,6 +50,9 @@ class KeseharianProvider extends ChangeNotifier {
   }
 
   Future<String?> toggleTodo(String id, bool currentStatus) async {
+    if (id.trim().isEmpty || id == 'null' || id == 'undefined') {
+      return 'ID tidak valid';
+    }
     try {
       await SupabaseService.toggleKeseharianTodo(id, currentStatus);
       await fetch();
@@ -60,6 +63,9 @@ class KeseharianProvider extends ChangeNotifier {
   }
 
   Future<String?> deleteTodo(String id) async {
+    if (id.trim().isEmpty || id == 'null' || id == 'undefined') {
+      return 'ID tidak valid';
+    }
     try {
       await SupabaseService.deleteKeseharianTodo(id);
       await fetch();
